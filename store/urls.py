@@ -1,7 +1,6 @@
-from re import search
-from django.contrib import admin
 from django.urls import path,include
 from . import views
+from store.Authentication import views as view
 
 
 urlpatterns = [
@@ -19,5 +18,9 @@ urlpatterns = [
     path('orders/<int:id>/<int:pid>/',views.my_order,name='orders'),
     path('myorders/<int:id>/',views.purchase),
     path(r'search/(?P<cat>\D+)',views.search_bar,name='search'),
+    path('enroll', view.register_api, name='enroll'),
+    path('enlist', view.login_api, name='enlist'),
+    path('list', view.get_user_data, name='list'),
+    path('report', view.details, name='report'),
 
 ]

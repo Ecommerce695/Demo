@@ -108,7 +108,6 @@ class Product(models.Model):
         return "%s"%self.name
 
 
-
 class Order(models.Model):
     user_id = models.ForeignKey(User_profile, on_delete=models.CASCADE,blank=False, null=False)
     product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
