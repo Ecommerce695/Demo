@@ -11,18 +11,18 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
-from . info import *
+# from . info import *
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 #  Importing Data for Info.py
-EMAIL_USE_TLS = EMAIL_USE_TLS
-EMAIL_HOST = EMAIL_HOST
-EMAIL_HOST_USER = EMAIL_HOST_USER
-EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD
-EMAIL_PORT = EMAIL_PORT
+# EMAIL_USE_TLS = EMAIL_USE_TLS
+# EMAIL_HOST = EMAIL_HOST
+# EMAIL_HOST_USER = EMAIL_HOST_USER
+# EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD
+# EMAIL_PORT = EMAIL_PORT
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
@@ -36,7 +36,12 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 #  Customizing Auth_User Model with Other Table
-AUTH_USER_MODEL =   "store.User_profile"
+AUTH_USER_MODEL =   "store.CustomerProfile"
+
+DEFAULT_AUTO_FIELD = 'django.db.models.UUIDField'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 
 # Application definition
 
@@ -47,17 +52,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'store',
     'rest_framework',
     'rest_framework.authtoken',
     'knox',
-    'corsheaders'
+    'corsheaders',
+    'store',
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
-        # 'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
         'knox.auth.TokenAuthentication',
     ),
 }
@@ -107,7 +112,7 @@ WSGI_APPLICATION = 'Ecomerce_project.wsgi.application'
 DATABASES = {
    'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'TestB', 
+        'NAME': 'eComm', 
         'USER': 'postgres', 
         'PASSWORD': 'Welcome!234',
         'HOST': 'e-commerce.cj3oddyv0bsk.us-west-1.rds.amazonaws.com', 
@@ -181,3 +186,4 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
