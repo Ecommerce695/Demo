@@ -1,8 +1,6 @@
-from email.headerregistry import Address
-from django.shortcuts import render,redirect
 from django.db import transaction
 # from django.contrib import messages
-from .serializers import RegisterSerializer, UserprofileSerializer
+from .serializers import RegisterSerializer, UserprofileSerializer,ResetPasswordSerializer
 from .models import AddressType, CustomerAddress, CustomerProfile, Product, Wishlist, Cart
 from rest_framework.response import Response
 from django.http import JsonResponse
@@ -17,11 +15,12 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from knox.auth import AuthToken
-from store.models import CustomerProfile
 from .serializers import RegisterSerializer
 from django.http import JsonResponse
 from django.contrib import auth
 from django.contrib.auth import logout
+from django.contrib.auth.hashers import make_password
+
 
 # User Registration API
 @transaction.atomic
@@ -71,16 +70,17 @@ def login_api(request):
     )
 
 
-# User Logout API
-@api_view(['POST'])
+# Logout Request of User
+@api_view(["GET"])
 def signoff(request):
     logout(request)
+    return Response('User Logged out successfully')
 
 
 # To Fetch/Update/Delete Particular User details by Passing PK
 @transaction.atomic
 @api_view(['GET','PUT','DELETE'])
-def user_detail(request, pk):
+def user_detail_api(request, pk):
     try:
         user = CustomerProfile.objects.get(pk=pk)
     except user.DoesNotExist:
@@ -105,12 +105,11 @@ def user_detail(request, pk):
 
 
 # Adding Selective Products to Wishlist Module
-import json
 
 @transaction.atomic
 @api_view(['POST'])
 #@login_required(login_url="login/")
-def wish_list(request,id,pid):
+def wish_list_api(request,id,pid):
     if request.method =='POST':
         user = CustomerProfile.objects.get(pk = id)
         pro= Product.objects.get(pk= pid)
@@ -165,10 +164,75 @@ def address_api(request,id):
         return HttpResponse('Sucessfull')
 
 
-# #Orders Function
+@transaction.atomic
+@api_view(['POST'])
+def add_to_cart_api(request,id,pid,qty=1):
+    user = CustomerProfile.objects.get(pk=id)
+    product  = Product.objects.get(pk=pid)
+    if request.method == 'POST':
+        if product.quantity >= qty:
+            if Cart.objects.filter(product=pid, customer=id):
+                return HttpResponse("Alredy this product exists in your cart")
+            else :
+                added = Cart.objects.create(
+                    customer = user,
+                    product = product,
+                    quantity = qty,
+                    price = product.unit_price,
+                    cart_value = product.unit_price * qty
+
+                
+                )
+                prod = Product.objects.filter(id=pid).update(available_qty = product.quantity - qty)
+                added.save()
+                print(user)
+                print(product)
+                print(product.unit_price)
+                print(product.quantity)
+                print(prod)
+                return HttpResponse("Added to Cart")
+        else : 
+            return HttpResponse("Cart Quantity is more that Product Quantity")
+    else : 
+        return HttpResponse("Failed to Add Product")
+
+
+
+# @transaction.atomic
+# @api_view(['PUT'])
+# def reset_password_api(request,id):
+#     try:
+#         user = CustomerProfile.objects.get(pk=id)
+#     except user.DoesNotExist:
+#         return HttpResponse(status=404)
+
+#     if request.method == 'PUT':
+#         data = JSONParser().parse(request)
+#         serializer = ResetPasswordSerializer(user, data=data)
+
+#         if serializer.is_valid():            
+#             serializer.save()
+#             user.set_password(serializer.data.get('password'))
+#             user.save()
+#             return Response(serializer.data)    
+#         return Response('S',{'message':True})
+
+
+@transaction.atomic
+@api_view(['PUT'])
+def reset(request,pk):
+    if request.method == 'PUT':
+        change_password = request.POST['password']
+        pwd = make_password(change_password)
+        CustomerProfile.objects.filter(id = pk).update(password = pwd)
+        # print(pas_reset)
+        return HttpResponse('Sucess')
+        
+
+
+#Orders Function
 # @transaction.atomic
 # @api_view(['POST'])
-# @csrf_exempt
 # def purchase(request,id,pid):
 #     if request.method =='POST':
 #         user = CustomerProfile.objects.get(pk = id)

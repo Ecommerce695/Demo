@@ -20,6 +20,7 @@ class CustomerProfile(AbstractUser):
 
     class Meta:
         db_table = 'customer_profile'
+        ordering = ['id']
 
 class AddressType(models.Model):
     type = models.CharField(primary_key=True, max_length=20)
@@ -35,6 +36,10 @@ class Category(models.Model):
     class Meta:
         db_table = 'category'
 
+    def __str__(self):
+        return self.category_name
+
+
 class Product(models.Model):
     id = models.AutoField(primary_key=True, db_column='product_id')
     vendor = models.ForeignKey('VendorProfile', models.DO_NOTHING, blank=True, null=True)
@@ -43,14 +48,19 @@ class Product(models.Model):
     description = models.CharField(max_length=50, blank=True, null=True)
     quantity = models.IntegerField(default=0, blank=True, null=True)
     unit_price = models.FloatField(blank=True, null=True)
+    # Add Dis_Price and Avaliable Qty Fileds
+    dis_price = models.FloatField(blank=True, null=True)
+    available_qty = models.PositiveIntegerField(default=0,blank=True, null=True)
 
 
     class Meta:
         db_table = 'product'
+        ordering = ['id']
 
     def __str__(self):
         return self.product_name
-
+    
+    
 
 class Cart(models.Model):
     id = models.AutoField(primary_key=True,db_column='cart_id')
@@ -58,6 +68,11 @@ class Cart(models.Model):
     product = models.ForeignKey(Product,db_column='product_id',on_delete=models.CASCADE,blank=True, null=True)
     quantity = models.IntegerField(blank=True, null=True)
     price = models.FloatField(blank=True, null=True)
+    # Extra Fields
+    cart_value = models.FloatField(blank=True,default=0, db_column='total_cart_value')
+    created_at = models.DateTimeField(default=datetime.datetime.now())
+    updated_at = models.DateTimeField(auto_now=True)
+
 
     class Meta:
         db_table = 'cart'
@@ -93,6 +108,7 @@ class PasswordReset(models.Model):
 
 class ProductLaptop(models.Model):
     product = models.ForeignKey(Product, models.CASCADE)
+    name = models.CharField(max_length=100, blank=True, null=True)
     series = models.CharField(max_length=50, blank=True, null=True)
     screen_size = models.CharField(max_length=50, blank=True, null=True)
     colour = models.CharField(max_length=50, blank=True, null=True)
@@ -112,7 +128,7 @@ class ProductLaptop(models.Model):
 
 class ProductMobile(models.Model):
     product = models.ForeignKey(Product, models.DO_NOTHING)
-    product_name = models.CharField(max_length=100, blank=True, null=True)
+    name = models.CharField(max_length=100, blank=True, null=True)
     model_number = models.CharField(max_length=50, blank=True, null=True)
     display_size = models.CharField(max_length=50, blank=True, null=True)
     processor = models.CharField(max_length=50, blank=True, null=True)
@@ -176,3 +192,5 @@ class Wishlist(models.Model):
 
     class Meta:
         db_table = 'wishlist'
+
+

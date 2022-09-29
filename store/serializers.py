@@ -59,6 +59,26 @@ class UserprofileSerializer(serializers.ModelSerializer):
         fields = ['first_name','last_name','email','mobile_number']
 
 
+class ResetPasswordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerProfile
+        fields = ['password']
+
+        extra_kwargs = {
+            "password" : {"write_only" : True}
+        }
+
+    def create(self, validated_data):
+        password = validated_data.get('password')
+
+        user = CustomerProfile.objects.update_user(
+            password = password
+        )
+
+        user.save()
+        return user
+
+
 class WishlistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wishlist
