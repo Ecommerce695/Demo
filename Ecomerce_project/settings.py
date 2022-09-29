@@ -11,18 +11,11 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
-# from . info import *
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-#  Importing Data for Info.py
-# EMAIL_USE_TLS = EMAIL_USE_TLS
-# EMAIL_HOST = EMAIL_HOST
-# EMAIL_HOST_USER = EMAIL_HOST_USER
-# EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD
-# EMAIL_PORT = EMAIL_PORT
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
@@ -33,11 +26,12 @@ SECRET_KEY = 'django-insecure-$@fsa-ig7=y!)=tp53=w9m3t(82=%#*tozfv___(!-ucqbv&n(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['50.18.24.167', '127.0.0.1','localhost']
 
-#  Customizing Auth_User Model with Other Table
+#  Customizing Auth_User Model with CustomerProfile Model
 AUTH_USER_MODEL =   "store.CustomerProfile"
 
+# Auto Generated Fields 
 DEFAULT_AUTO_FIELD = 'django.db.models.UUIDField'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
@@ -56,6 +50,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'knox',
     'corsheaders',
+    # App name
     'store',
 ]
 
@@ -67,7 +62,7 @@ REST_FRAMEWORK = {
     ),
 }
 
-
+ # If you want to allow access for all domains, set the following variable to TRUE
 CORS_ORIGIN_ALLOW_ALL = True
 
 MIDDLEWARE = [
@@ -172,8 +167,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY=None
 
+# Value determines whether the server allows cookies in the cross-site HTTP requests
 CORS_ALLOW_CREDENTIALS = True
 
+# Methods allowed for CORS
 CORS_ALLOW_METHODS = [
     'DELETE',
     'OPTIONS',
@@ -183,6 +180,7 @@ CORS_ALLOW_METHODS = [
     'PUT',  
 ]
 
+# Non-standard headers allowed in the request
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',

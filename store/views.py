@@ -162,6 +162,7 @@ def address_api(request,id):
         )
 
         return HttpResponse('Sucessfull')
+<<<<<<< HEAD
 
 
 @transaction.atomic
@@ -313,3 +314,5 @@ def reset(request,pk):
 
 
         
+=======
+>>>>>>> f8038fe51dc52d035b4cffa96319ed57c652b950
