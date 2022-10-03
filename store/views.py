@@ -1,12 +1,9 @@
+from dis import disco
 from django.db import transaction
-# from django.contrib import messages
 from .serializers import RegisterSerializer, UserprofileSerializer,ResetPasswordSerializer
-from .models import AddressType, CustomerAddress, CustomerProfile, Product, Wishlist, Cart
+from .models import AddressType, Category, CustomerAddress, CustomerProfile, Product, Wishlist, Cart
 from rest_framework.response import Response
 from django.http import JsonResponse
-#create_refresh_token
-# from .authentication import create_access_token, create_refresh_token 
-# from rest_framework.exceptions import APIException
 from rest_framework.decorators import api_view
 from django.http import HttpResponse
 from rest_framework.parsers import JSONParser
@@ -77,7 +74,7 @@ def signoff(request):
     return Response('User Logged out successfully')
 
 
-# To Fetch/Update/Delete Particular User details by Passing PK
+# To Fetch/Update/Delete Particular User details by Passing PrimaryKey
 @transaction.atomic
 @api_view(['GET','PUT','DELETE'])
 def user_detail_api(request, pk):
@@ -103,9 +100,20 @@ def user_detail_api(request, pk):
         user.delete()
         return HttpResponse(status=204)
 
+# Reset/Change Password 
+@transaction.atomic
+@api_view(['PUT'])
+def reset(request,pk):
+    if request.method == 'PUT':
+        change_password = request.POST['password']
+        pwd = make_password(change_password)
+        CustomerProfile.objects.filter(id = pk).update(password = pwd)
+        # print(pas_reset)
+        return HttpResponse('Sucess')
+        
 
-# Adding Selective Products to Wishlist Module
 
+# Adding Selective Products of User to Wishlist
 @transaction.atomic
 @api_view(['POST'])
 #@login_required(login_url="login/")
@@ -131,7 +139,7 @@ def wish_list_api(request,id,pid):
     else:
         return HttpResponse("Login required")   
 
-
+# USER  ADDRESSESS
 @transaction.atomic
 @api_view(['POST'])
 def address_api(request,id):
@@ -162,157 +170,96 @@ def address_api(request,id):
         )
 
         return HttpResponse('Sucessfull')
-<<<<<<< HEAD
 
-
+# ADDING PRODUCT TO CART FOR FIRST TIME
 @transaction.atomic
 @api_view(['POST'])
 def add_to_cart_api(request,id,pid,qty=1):
     user = CustomerProfile.objects.get(pk=id)
     product  = Product.objects.get(pk=pid)
     if request.method == 'POST':
-        if product.quantity >= qty:
+        # if product.quantity >= qty:
+        if product.available_qty >= qty:
             if Cart.objects.filter(product=pid, customer=id):
                 return HttpResponse("Alredy this product exists in your cart")
             else :
-                added = Cart.objects.create(
+                Cart.objects.create(
                     customer = user,
                     product = product,
                     quantity = qty,
                     price = product.unit_price,
                     cart_value = product.unit_price * qty
-
-                
                 )
-                prod = Product.objects.filter(id=pid).update(available_qty = product.quantity - qty)
-                added.save()
-                print(user)
-                print(product)
-                print(product.unit_price)
-                print(product.quantity)
-                print(prod)
+                Product.objects.filter(id=pid).update(available_qty =product.available_qty - qty)
                 return HttpResponse("Added to Cart")
         else : 
             return HttpResponse("Cart Quantity is more that Product Quantity")
     else : 
         return HttpResponse("Failed to Add Product")
 
+# REMOVING THE PRODUCT FROM USER CART
+@transaction.atomic
+@api_view(['DELETE'])
+def delete_from_cart(request,id,pid):
+    if request.method == 'DELETE':
+        uid = CustomerProfile.objects.get(pk=id)
+        userid = uid.id
+        capid = Cart.objects.get(product=pid)
+        cartqnty = capid.quantity
+        prid = Product.objects.get(pk=pid)
+        productid = prid.id
+        product_avl_quantity = prid.available_qty
+        try:
+            Cart.objects.filter(product=productid, customer=userid).delete()
+            Product.objects.filter(id=productid).update(available_qty=product_avl_quantity+cartqnty)
+            return HttpResponse('Your product successfully Removed from the cart')
+        except:
+            return HttpResponse('Product does not exists')
+
+from django.db.models.functions import Round 
 
 
-# @transaction.atomic
-# @api_view(['PUT'])
-# def reset_password_api(request,id):
-#     try:
-#         user = CustomerProfile.objects.get(pk=id)
-#     except user.DoesNotExist:
-#         return HttpResponse(status=404)
-
-#     if request.method == 'PUT':
-#         data = JSONParser().parse(request)
-#         serializer = ResetPasswordSerializer(user, data=data)
-
-#         if serializer.is_valid():            
-#             serializer.save()
-#             user.set_password(serializer.data.get('password'))
-#             user.save()
-#             return Response(serializer.data)    
-#         return Response('S',{'message':True})
-
-
+# ADDING EXTRA QUANTITYT TO EXSISTING PRODUCT
 @transaction.atomic
 @api_view(['PUT'])
-def reset(request,pk):
+def cart_quantity_add_api(request,id,pid,qty=1):
     if request.method == 'PUT':
-        change_password = request.POST['password']
-        pwd = make_password(change_password)
-        CustomerProfile.objects.filter(id = pk).update(password = pwd)
-        # print(pas_reset)
-        return HttpResponse('Sucess')
-        
+        user = CustomerProfile.objects.get(pk = id)
+        product = Product.objects.get(pk = pid)
+
+        cart = Cart.objects.get(product = pid)
+        if qty <= cart.quantity and cart.quantity >0:
+            Cart.objects.filter(customer = user).filter(product = pid).update(
+                quantity = cart.quantity + qty, 
+                cart_value = cart.cart_value + product.unit_price
+                )
+            Product.objects.filter(id = pid).update(available_qty = product.available_qty - qty)
+            return HttpResponse("Quantity Addded Sucessfull")
+        else : 
+            return HttpResponse("No Sufficient Qty")
+    else :
+        return HttpResponse("Invalid Method") 
 
 
-#Orders Function
-# @transaction.atomic
-# @api_view(['POST'])
-# def purchase(request,id,pid):
-#     if request.method =='POST':
-#         user = CustomerProfile.objects.get(pk = id)
-#         pro= Product.objects.get(pk= pid)
+# REMOVING EXTRA QUANTITYT TO EXSISTING PRODUCT
+@transaction.atomic
+@api_view(['PUT'])
+def cart_quantity_remove_api(request,id,pid,qty=1):
+    if request.method == 'PUT':
+        user = CustomerProfile.objects.get(pk = id)
+        product = Product.objects.get(pk = pid)
 
-#         user_order = Orders.objects.create(user_id = user, product_id =pro)
-#         user_order.save()
-#         return HttpResponse("Sucessful")
+        cart = Cart.objects.get(product = pid)
+        if cart.quantity >=qty:
+            Cart.objects.filter(customer = user).filter(product = pid).update(
+                quantity = cart.quantity - qty, 
+                cart_value = cart.cart_value - product.unit_price
+                )
+            Product.objects.filter(id = pid).update(available_qty = product.available_qty + qty)
+            return HttpResponse("Quantity Removed Sucessfull")
+        elif cart.quantity == 0 and cart.quantity < 1:
+            Cart.objects.filter(product = pid).filter(customer= user).delete()
+            return HttpResponse("Product Removed From Cart Sucessfully")
+    else :
+        return HttpResponse("Invalid Request Method") 
 
-#     else:
-#         return HttpResponse("Login required") 
-
-
-# @transaction.atomic
-# @csrf_exempt
-# def product_view(request):
-    
-#     if request.method == 'POST':
-#         pro = Product.objects.last()
-#         # category= request.POST['category']
-#         # sub_cat = request.POST['sub_cat']
-#         category = Category.objects.get('pk')
-#         prod = Product.objects.create(category= category)
-#         update = Product.objects.update(product_id = request.category[:2]+"-"+request.sub_cat[:2]+pro)
-#         print(update)
-#         prod.save()
-
-#         response = {
-#             prod.category,
-#             prod.sub_cat,
-#             update.product_id
-#         }        
-
-#         return HttpResponse(response)
-#     return HttpResponse('Failed')
-
-# @api_view(['GET'])
-# @transaction.atomic
-# @csrf_exempt
-# def my_orders(request,id):
-
-#     if request.method == 'GET':
-#         user = CustomerProfile.objects.get(pk=id)        
-#         order = Orders.objects.filter(user_id = user)
-
-#         data = list(order.values())
-#         print(order)
-
-#         print(data)
-#         # returning it
-#         return JsonResponse(data, safe=False)
-    
-# @transaction.atomic
-# @csrf_exempt
-# def search_bar(request,cat):
-
-#     if request.method =='GET':
-#         category = Category.objects.filter(name = cat)
-#         response = {
-#             category
-#         }
-#         return HttpResponse(response)
-
-# @transaction.atomic
-# @csrf_exempt
-# def cart_view(request):
-#     if request.method == 'POST':
-
-# @transaction.atomic
-# @csrf_exempt
-# def fetch(request, id):
-#     if request.method  == 'GET':
-#         user  = User_profile.objects.get(pk=id)
-#         email = user.email
-#         return HttpResponse(email)
-
-
-
-
-        
-=======
->>>>>>> f8038fe51dc52d035b4cffa96319ed57c652b950

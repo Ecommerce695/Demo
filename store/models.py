@@ -48,7 +48,6 @@ class Product(models.Model):
     description = models.CharField(max_length=50, blank=True, null=True)
     quantity = models.IntegerField(default=0, blank=True, null=True)
     unit_price = models.FloatField(blank=True, null=True)
-    # Add Dis_Price and Avaliable Qty Fileds
     dis_price = models.FloatField(blank=True, null=True)
     available_qty = models.PositiveIntegerField(default=0,blank=True, null=True)
 
@@ -68,7 +67,6 @@ class Cart(models.Model):
     product = models.ForeignKey(Product,db_column='product_id',on_delete=models.CASCADE,blank=True, null=True)
     quantity = models.IntegerField(blank=True, null=True)
     price = models.FloatField(blank=True, null=True)
-    # Extra Fields
     cart_value = models.FloatField(blank=True,default=0, db_column='total_cart_value')
     created_at = models.DateTimeField(default=datetime.datetime.now())
     updated_at = models.DateTimeField(auto_now=True)
