@@ -107,7 +107,7 @@ WSGI_APPLICATION = 'Ecomerce_project.wsgi.application'
 DATABASES = {
    'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'eComm', 
+        'NAME': 'Ecom', 
         'USER': 'postgres', 
         'PASSWORD': 'Welcome!234',
         'HOST': 'e-commerce.cj3oddyv0bsk.us-west-1.rds.amazonaws.com', 

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from store.models import CustomerProfile, Wishlist
+from store.models import CustomerProfile, Wishlist,CustomerAddress
 from rest_framework import serializers , validators
 from django.contrib.auth.hashers import make_password
 
@@ -58,6 +58,16 @@ class UserprofileSerializer(serializers.ModelSerializer):
         model = CustomerProfile
         fields = ['first_name','last_name','email','mobile_number']
 
+class UserAddress(serializers.ModelSerializer):
+    customer = serializers.CharField(source = 'CustomerProfile.id')
+
+    class Meta:
+        model = CustomerAddress
+        fields = ('type','customer','name', 'mobile_number','address',
+                    'near_by','street_no','city','state','country','postal_code')
+
+
+
 
 class ResetPasswordSerializer(serializers.ModelSerializer):
     class Meta:
@@ -77,11 +87,5 @@ class ResetPasswordSerializer(serializers.ModelSerializer):
 
         user.save()
         return user
-
-
-class WishlistSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Wishlist
-        fields = ['customer', 'product_id', 'price']
 
         

@@ -192,3 +192,11 @@ class Wishlist(models.Model):
         db_table = 'wishlist'
 
 
+class Search_bar_history(models.Model):
+    id = models.AutoField(primary_key=True,db_column = 'search_id')
+    customer = models.ForeignKey(CustomerProfile,on_delete = models.DO_NOTHING)
+    search_item = models.CharField(max_length = 100, null= True, blank=True)
+    created_at = models.DateTimeField(default = datetime.datetime.now())
+
+    class Meta:
+        db_table = 'search_bar_history'

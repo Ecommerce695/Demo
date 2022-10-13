@@ -1,7 +1,6 @@
-from dis import disco
 from django.db import transaction
-from .serializers import RegisterSerializer, UserprofileSerializer,ResetPasswordSerializer
-from .models import AddressType, Category, CustomerAddress, CustomerProfile, Product, Wishlist, Cart
+from .serializers import RegisterSerializer, UserprofileSerializer
+from .models import AddressType, Category, CustomerAddress, CustomerProfile, Product, Wishlist, Cart, Search_bar_history
 from rest_framework.response import Response
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
@@ -14,7 +13,6 @@ from rest_framework.authtoken.serializers import AuthTokenSerializer
 from knox.auth import AuthToken
 from .serializers import RegisterSerializer
 from django.http import JsonResponse
-from django.contrib import auth
 from django.contrib.auth import logout
 from django.contrib.auth.hashers import make_password
 
@@ -69,10 +67,11 @@ def login_api(request):
 
 # Logout Request of User
 @api_view(["GET"])
-def signoff(request):
+def logout_api(request):
     logout(request)
     return Response('User Logged out successfully')
 
+                            #*****************USER PROFILE ********************************
 
 # To Fetch/Update/Delete Particular User details by Passing PrimaryKey
 @transaction.atomic
@@ -100,23 +99,50 @@ def user_detail_api(request, pk):
         user.delete()
         return HttpResponse(status=204)
 
-# Reset/Change Password 
+# Update/Change Password 
 @transaction.atomic
 @api_view(['PUT'])
-def reset(request,pk):
+def reset_pwd_api(request,pk):
     if request.method == 'PUT':
         change_password = request.POST['password']
         pwd = make_password(change_password)
         CustomerProfile.objects.filter(id = pk).update(password = pwd)
-        # print(pas_reset)
-        return HttpResponse('Sucess')
+        cust = CustomerProfile.objects.filter(id = pk)
+        data = list(cust.values('first_name', 'last_name','username'))
+        return JsonResponse(data, safe=False)
         
+# Modifing First Name 
+@transaction.atomic
+@api_view(['PUT'])
+def fname_update_api(request, id):
+    if request.method =='PUT':
+        first_name = request.POST['first_name']
+        CustomerProfile.objects.filter(id=id).update(first_name = first_name)
+        return HttpResponse("Modified First Name")
+
+#Modifing Last Name 
+@transaction.atomic
+@api_view(['PUT'])
+def lname_update_api(request, id):
+    if request.method =='PUT':
+        last_name = request.POST['last_name']
+        CustomerProfile.objects.filter(id=id).update(last_name = last_name)
+        return HttpResponse("Modified Last Name")
+
+#Modifing Email
+@transaction.atomic
+@api_view(['PUT'])
+def email_update_api(request,id):
+    if request.method == 'PUT':
+        update_email = request.POST['email']
+    
+        CustomerProfile.objects.filter(id=id).update(email = update_email)
+        return HttpResponse("Modified Email")
 
 
-# Adding Selective Products of User to Wishlist
+# Moving Fav Product to WishList
 @transaction.atomic
 @api_view(['POST'])
-#@login_required(login_url="login/")
 def wish_list_api(request,id,pid):
     if request.method =='POST':
         user = CustomerProfile.objects.get(pk = id)
@@ -139,7 +165,7 @@ def wish_list_api(request,id,pid):
     else:
         return HttpResponse("Login required")   
 
-# USER  ADDRESSESS
+# User Address API
 @transaction.atomic
 @api_view(['POST'])
 def address_api(request,id):
@@ -171,6 +197,9 @@ def address_api(request,id):
 
         return HttpResponse('Sucessfull')
 
+
+#*************************CART Module API******************************
+
 # ADDING PRODUCT TO CART FOR FIRST TIME
 @transaction.atomic
 @api_view(['POST'])
@@ -178,12 +207,11 @@ def add_to_cart_api(request,id,pid,qty=1):
     user = CustomerProfile.objects.get(pk=id)
     product  = Product.objects.get(pk=pid)
     if request.method == 'POST':
-        # if product.quantity >= qty:
         if product.available_qty >= qty:
             if Cart.objects.filter(product=pid, customer=id):
                 return HttpResponse("Alredy this product exists in your cart")
             else :
-                Cart.objects.create(
+                cart= Cart.objects.create(
                     customer = user,
                     product = product,
                     quantity = qty,
@@ -192,7 +220,7 @@ def add_to_cart_api(request,id,pid,qty=1):
                 )
                 Product.objects.filter(id=pid).update(available_qty =product.available_qty - qty)
                 return HttpResponse("Added to Cart")
-        else : 
+        else :  
             return HttpResponse("Cart Quantity is more that Product Quantity")
     else : 
         return HttpResponse("Failed to Add Product")
@@ -200,7 +228,7 @@ def add_to_cart_api(request,id,pid,qty=1):
 # REMOVING THE PRODUCT FROM USER CART
 @transaction.atomic
 @api_view(['DELETE'])
-def delete_from_cart(request,id,pid):
+def delete_from_cart_api(request,id,pid):
     if request.method == 'DELETE':
         uid = CustomerProfile.objects.get(pk=id)
         userid = uid.id
@@ -215,8 +243,6 @@ def delete_from_cart(request,id,pid):
             return HttpResponse('Your product successfully Removed from the cart')
         except:
             return HttpResponse('Product does not exists')
-
-from django.db.models.functions import Round 
 
 
 # ADDING EXTRA QUANTITYT TO EXSISTING PRODUCT
@@ -262,4 +288,26 @@ def cart_quantity_remove_api(request,id,pid,qty=1):
             return HttpResponse("Product Removed From Cart Sucessfully")
     else :
         return HttpResponse("Invalid Request Method") 
+
+# Fetch User Cart Details
+@transaction.atomic
+@api_view(['GET'])
+def cart_details_api(request, id):
+    if request.method == 'GET':
+        cart = Cart.objects.filter(customer = id)
+        data = list(cart.values())
+        return JsonResponse(data, safe=False)
+
+
+
+#*************************PRODUCT API******************************
+
+#Displays List Of Products
+@transaction.atomic
+@api_view(['GET'])
+def products(request):
+    if request.method == 'GET':
+        product = Product.objects.all()
+        data = list(product.values())
+        return JsonResponse(data, safe=False)
 
