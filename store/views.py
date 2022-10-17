@@ -1,3 +1,6 @@
+#! /usr/bin/env python
+
+from unicodedata import category
 from django.db import transaction
 from .serializers import RegisterSerializer, UserprofileSerializer
 from .models import AddressType, Category, CustomerAddress, CustomerProfile, Product, Wishlist, Cart, Search_bar_history
@@ -76,9 +79,9 @@ def logout_api(request):
 # To Fetch/Update/Delete Particular User details by Passing PrimaryKey
 @transaction.atomic
 @api_view(['GET','PUT','DELETE'])
-def user_detail_api(request, pk):
+def user_detail_api(request, id):
     try:
-        user = CustomerProfile.objects.get(pk=pk)
+        user = CustomerProfile.objects.get(pk=id)
     except user.DoesNotExist:
         return HttpResponse(status=404)
   
@@ -102,12 +105,12 @@ def user_detail_api(request, pk):
 # Update/Change Password 
 @transaction.atomic
 @api_view(['PUT'])
-def reset_pwd_api(request,pk):
+def reset_pwd_api(request,id):
     if request.method == 'PUT':
         change_password = request.POST['password']
         pwd = make_password(change_password)
-        CustomerProfile.objects.filter(id = pk).update(password = pwd)
-        cust = CustomerProfile.objects.filter(id = pk)
+        CustomerProfile.objects.filter(id = id).update(password = pwd)
+        cust = CustomerProfile.objects.filter(id = id)
         data = list(cust.values('first_name', 'last_name','username'))
         return JsonResponse(data, safe=False)
         
@@ -311,3 +314,35 @@ def products(request):
         data = list(product.values())
         return JsonResponse(data, safe=False)
 
+@transaction.atomic
+@api_view(['GET'])
+def category_product_api(request):
+    if request.method == 'GET':
+        cat = Category.objects.all().values('id') #.values_list('pk', flat=True)
+        print(cat.values('id'))
+        data = list(cat)
+        return JsonResponse(data, safe=False)
+
+from django.db.models import Q
+
+# Filters Product with Search Name Filter
+@transaction.atomic
+@api_view(['POST'])
+def searchbar(request,id):
+    if request.method == 'POST':
+        user = CustomerProfile.objects.get(pk=id)
+        name = request.POST['name']
+        search = Search_bar_history.objects.create(customer = user, search_item = name)
+        search.save()
+        items  = Product.objects.filter(Q(product_name__startswith = name)| Q(product_name__icontains= name))
+
+        if items.exists():
+            data = list(items.values('id','product_name', 'unit_price','dis_price'))
+        else:
+            categorysearch = Category.objects.get(category_name=name)
+            category_id = categorysearch.id
+            products = Product.objects.filter(category = category_id)
+            data = list(products.values('id','product_name', 'unit_price','dis_price'))
+        return JsonResponse(data,safe=False)
+    else:
+        return HttpResponse("Method Not Allowed")
