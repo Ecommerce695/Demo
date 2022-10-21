@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 
-from unicodedata import category
 from django.db import transaction
 from .serializers import RegisterSerializer, UserprofileSerializer
 from .models import AddressType, Category, CustomerAddress, CustomerProfile, Product, Wishlist, Cart, Search_bar_history
@@ -18,6 +17,7 @@ from .serializers import RegisterSerializer
 from django.http import JsonResponse
 from django.contrib.auth import logout
 from django.contrib.auth.hashers import make_password
+from django.db.models import Q
 
 
 # User Registration API
@@ -168,10 +168,10 @@ def wish_list_api(request,id,pid):
     else:
         return HttpResponse("Login required")   
 
-# User Address API
+# User ADD Address API
 @transaction.atomic
 @api_view(['POST'])
-def address_api(request,id):
+def add_address_api(request,id):
     user = CustomerProfile.objects.get(pk=id)
     if request.method == 'POST':
         name = user.username
@@ -199,6 +199,18 @@ def address_api(request,id):
         )
 
         return HttpResponse('Sucessfull')
+
+            # **** Delete Address API*********
+
+@transaction.atomic
+@api_view(['DELETE'])
+def delete_address_api(request, id,aid):
+    user = CustomerProfile.objects.get(pk=id)
+    if request.method =='DELETE':
+        CustomerAddress.objects.filter(customer = user.id).filter(pk = aid).delete()
+        return HttpResponse("Deleted Successfully")
+    else:
+        return HttpResponse('Customer Address Not Found')
 
 
 #*************************CART Module API******************************
@@ -303,7 +315,7 @@ def cart_details_api(request, id):
 
 
 
-#*************************PRODUCT API******************************
+        #   ****************  PRODUCT API ******************************
 
 #Displays List Of Products
 @transaction.atomic
@@ -314,18 +326,9 @@ def products(request):
         data = list(product.values())
         return JsonResponse(data, safe=False)
 
-@transaction.atomic
-@api_view(['GET'])
-def category_product_api(request):
-    if request.method == 'GET':
-        cat = Category.objects.all().values('id') #.values_list('pk', flat=True)
-        print(cat.values('id'))
-        data = list(cat)
-        return JsonResponse(data, safe=False)
 
-from django.db.models import Q
+                # *******Filters Product with Search Name Filter*******
 
-# Filters Product with Search Name Filter
 @transaction.atomic
 @api_view(['POST'])
 def searchbar(request,id):
@@ -346,3 +349,94 @@ def searchbar(request,id):
         return JsonResponse(data,safe=False)
     else:
         return HttpResponse("Method Not Allowed")
+
+
+            ##  ***********Mobile Wise Products Filter API***********************
+
+@transaction.atomic
+@api_view(['GET'])
+def mobile_category_api(request):
+    if request.method == 'GET':
+        category = Category.objects.get(category_name = 'Mobiles')
+        category_id = category.id
+        product = Product.objects.filter(category = category_id)
+        data = list(product.values('id','product_name', 'unit_price','dis_price'))
+        return JsonResponse(data,safe=False)
+
+
+            ##  ***********Laptop Wise Products Filter API***********************
+
+@transaction.atomic
+@api_view(['GET'])
+def laptop_category_api(request):
+    if request.method == 'GET':
+        category = Category.objects.get(category_name = 'Laptops')
+        category_id = category.id
+        product = Product.objects.filter(category = category_id)
+        data = list(product.values('id','product_name', 'unit_price','dis_price'))
+        return JsonResponse(data,safe=False)
+
+
+            ##  ***********Gadgets Wise Products Filter API***********************
+
+@transaction.atomic
+@api_view(['GET'])
+def gadget_category_api(request):
+    if request.method == 'GET':
+        category = Category.objects.get(category_name = 'Gadgets')
+        category_id = category.id
+        product = Product.objects.filter(category = category_id)
+        data = list(product.values('id','product_name', 'unit_price','dis_price'))
+        return JsonResponse(data,safe=False)
+
+
+            #  ****************Recommended Products API*********************
+@transaction.atomic()
+@api_view(['GET'])
+def recommendation_api(request,id):
+    if request.method == 'GET':
+        user = CustomerProfile.objects.get(pk = id)
+        id  = user.id
+        recmmd = Search_bar_history.objects.filter(customer= id).order_by('-created_at')[:5]
+        data = list(recmmd.values())
+        return JsonResponse(data,safe=False)
+
+            # ******** Latest Products**********
+
+@transaction.atomic()
+@api_view(['GET'])
+def latest_product_api(request):
+    if request.method =='GET':
+        product = Product.objects.all().order_by('-id')[:5]
+        data = list(product.values('id','product_name', 'unit_price','dis_price'))
+        return JsonResponse(data,safe=False)
+
+
+            # *********** Price Filter API ***********
+
+@transaction.atomic
+@api_view(['GET'])
+def price_filter_api(request):
+    price_from = request.GET.get('price_from', None)
+    price_to = request.GET.get('price_to', None)
+
+    if price_from and price_to:
+        product = Product.objects.filter(unit_price__range=(price_from, price_to))
+        data = list(product.values('id', 'product_name', 'unit_price'))
+        return JsonResponse(data, safe=False)
+    else:
+        products = Product.objects.all()
+        data = list(products.values('id', 'product_name', 'unit_price'))
+        return JsonResponse(data, safe=False)
+
+
+@transaction.atomic
+@api_view(['GET'])
+def category_name_wise_product_filter_api(request, name):
+    if request.method == 'GET':
+        categories = Category.objects.get(category_name__iexact = name)
+        categoryid = categories.id
+
+        products = Product.objects.filter(category = categoryid)
+        productslist = list(products.values('product_name'))
+        return JsonResponse(productslist, safe=False)
