@@ -2,7 +2,7 @@
 
 from django.db import transaction
 from .serializers import RegisterSerializer, UserprofileSerializer
-from .models import AddressType, Category, CustomerAddress, CustomerProfile, Product, Wishlist, Cart, Search_bar_history
+from .models import AddressType, Category, CustomerAddress,Reviews, CustomerProfile, Product, Wishlist, Cart, Search_bar_history
 from rest_framework.response import Response
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
@@ -29,8 +29,6 @@ def register_api(request):
     user = serializer.save()
 
     user.save()
-    
-    _, token = AuthToken.objects.create(user)
 
     return Response (
         {
@@ -40,8 +38,7 @@ def register_api(request):
                 'email' : user.email,
                 'password' : user.password,
                 'mobile' : user.mobile_number
-            },
-            'token' : token
+            }
         }
     )
 
@@ -440,3 +437,43 @@ def category_name_wise_product_filter_api(request, name):
         products = Product.objects.filter(category = categoryid)
         productslist = list(products.values('product_name'))
         return JsonResponse(productslist, safe=False)
+
+
+#####  REVIEW FOR PRODUCT PURCHASED
+from django.db.models import Avg
+
+@transaction.atomic
+@api_view(['POST'])
+
+def review(request,uid,pid):
+    if request.method == 'POST':
+        rating = request.POST['rating']
+        comments = request.POST['comments']
+
+        userid = CustomerProfile.objects.get(id=uid)
+        productid = Product.objects.get(id=pid)
+
+        review = Reviews.objects.filter(user=uid, product=pid)
+        if review.exists():
+            return HttpResponse("Review exists")
+        if int(rating) <= 5:
+            Reviews.objects.create(user=userid, product=productid, rating=rating, comments=comments)
+            query = Reviews.objects.filter(product=pid).values_list('rating')
+            queryavg = query.aggregate(Avg('rating')).get('rating__avg')
+            Product.objects.filter(Product_id=pid).update(avg_rating=queryavg)
+            return HttpResponse('Success')
+        else:
+            return HttpResponse('Error')    
+    else:
+        return HttpResponse('Error')
+
+
+##### GET TOP RATED PRODUCTS
+@transaction.atomic
+@api_view(['GET'])
+def topratedproducts(request):
+    if request.method =='GET':
+        # userid = CustomerProfile.objects.filter(id = uid)
+        products = Product.objects.filter(avg_rating__gte = 4).values()
+        return Response(products)
+        

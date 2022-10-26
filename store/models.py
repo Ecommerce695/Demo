@@ -1,11 +1,10 @@
 from django.db import models
 import datetime
 from django.contrib.auth.models import AbstractUser
-import uuid   
 
 
 class CustomerProfile(AbstractUser):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False,db_column='customer_id')
+    id = models.AutoField(primary_key=True, db_column='customer_id')
     first_name = models.CharField(max_length=50, blank=True, null=True)
     last_name = models.CharField(max_length=50, blank=True, null=True)
     username = models.CharField(max_length=50,unique=True)
@@ -42,7 +41,7 @@ class Category(models.Model):
 
 class Product(models.Model):
     id = models.AutoField(primary_key=True, db_column='product_id')
-    vendor = models.ForeignKey('VendorProfile', models.DO_NOTHING, blank=True, null=True)
+    vendor = models.ForeignKey(CustomerProfile, models.DO_NOTHING, blank=True, null=True)
     category = models.ForeignKey(Category, models.DO_NOTHING, blank=True, null=True)
     product_name = models.CharField(max_length=40, blank=True, null=True)
     description = models.CharField(max_length=50, blank=True, null=True)
@@ -146,7 +145,7 @@ class ProductMobile(models.Model):
 
 class ProductSaleDetails(models.Model):
     id = models.AutoField(primary_key=True)
-    vendor = models.ForeignKey('VendorProfile', models.CASCADE)
+    vendor = models.ForeignKey(CustomerProfile, models.CASCADE)
     product = models.ForeignKey(Product, models.CASCADE)
     description = models.CharField(max_length=250)
     price = models.FloatField(max_length=30, blank=True, null=True)
@@ -157,17 +156,15 @@ class ProductSaleDetails(models.Model):
         db_table = 'product_sale_details'
 
 
-class VendorProfile(models.Model):
-    vendor_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+class VendorOrgProfile(models.Model):
+    vendor = models.ForeignKey(CustomerProfile, models.CASCADE)
     org_id = models.CharField(max_length=30, blank=True, null=True)
-    username = models.CharField(unique=True, max_length=50)
-    full_name = models.CharField(max_length=40, blank=True, null=True)
-    address = models.CharField(max_length=250, blank=True, null=True)
     org_name = models.CharField(max_length=100, blank=True, null=True)
-    email_id = models.EmailField(max_length=50, blank=True, null=True)
+    email = models.EmailField(max_length=50, blank=True, null=True)
     phone_number = models.PositiveBigIntegerField(blank=True, null=True)
     tax_id = models.CharField(max_length=50, blank=True, null=True)
     description = models.TextField(max_length=256, blank=True, null=True)
+    address = models.CharField(max_length=250, blank=True, null=True)
     city = models.CharField(max_length=30, blank=True, null=True)
     state = models.CharField(max_length=50, blank=True, null=True)
     pincode = models.IntegerField(blank=True, null=True)
@@ -175,7 +172,7 @@ class VendorProfile(models.Model):
     date_joined = models.DateTimeField(default=datetime.datetime.now())
 
     class Meta:
-        db_table = 'vendor_profile'
+        db_table = 'vendor_org_profile'
 
     def __str__(self):
         return self.username
@@ -200,3 +197,15 @@ class Search_bar_history(models.Model):
 
     class Meta:
         db_table = 'search_bar_history'
+
+class Reviews(models.Model):
+    review_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(CustomerProfile, on_delete=models.DO_NOTHING, db_column='user_id')
+    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING, db_column='product_id')
+    comments = models.TextField()
+    rating = models.FloatField()
+    images = models.ImageField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add = True)
+
+    class Meta:
+        db_table = 'reviews'
