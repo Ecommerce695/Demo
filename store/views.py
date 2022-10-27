@@ -3,6 +3,7 @@
 from django.db import transaction
 from .serializers import RegisterSerializer, UserprofileSerializer
 from .models import AddressType, Category, CustomerAddress,Reviews, CustomerProfile, Product, Wishlist, Cart, Search_bar_history
+from .models import KnoxAuthtoken
 from rest_framework.response import Response
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
@@ -18,6 +19,7 @@ from django.http import JsonResponse
 from django.contrib.auth import logout
 from django.contrib.auth.hashers import make_password
 from django.db.models import Q
+
 
 
 # User Registration API
@@ -76,9 +78,12 @@ def logout_api(request):
 # To Fetch/Update/Delete Particular User details by Passing PrimaryKey
 @transaction.atomic
 @api_view(['GET','PUT','DELETE'])
-def user_detail_api(request, id):
+def user_detail_api(request, token):
     try:
-        user = CustomerProfile.objects.get(pk=id)
+        # user = CustomerProfile.objects.get(pk=id)
+        u_token = KnoxAuthtoken.objects.get(token_key = token)
+        a = u_token.user_id
+        user = CustomerProfile.objects.get(id=a)
     except user.DoesNotExist:
         return HttpResponse(status=404)
   
@@ -102,50 +107,69 @@ def user_detail_api(request, id):
 # Update/Change Password 
 @transaction.atomic
 @api_view(['PUT'])
-def reset_pwd_api(request,id):
+def reset_pwd_api(request,token):
+    try:
+        # user = CustomerProfile.objects.get(pk=id)
+        u_token = KnoxAuthtoken.objects.get(token_key = token)
+        a = u_token.user_id
+        use = CustomerProfile.objects.get(id=a)
+        user = use.id
+    except user.DoesNotExist:
+        return HttpResponse(status=404)
+    
     if request.method == 'PUT':
+
         change_password = request.POST['password']
         pwd = make_password(change_password)
-        CustomerProfile.objects.filter(id = id).update(password = pwd)
-        cust = CustomerProfile.objects.filter(id = id)
+        CustomerProfile.objects.filter(id = user).update(password = pwd)
+        cust = CustomerProfile.objects.filter(id = user)
         data = list(cust.values('first_name', 'last_name','username'))
         return JsonResponse(data, safe=False)
         
-# Modifing First Name 
-@transaction.atomic
-@api_view(['PUT'])
-def fname_update_api(request, id):
-    if request.method =='PUT':
-        first_name = request.POST['first_name']
-        CustomerProfile.objects.filter(id=id).update(first_name = first_name)
-        return HttpResponse("Modified First Name")
+# # Modifing First Name 
+# @transaction.atomic
+# @api_view(['PUT'])
+# def fname_update_api(request, id):
+#     if request.method =='PUT':
+#         first_name = request.POST['first_name']
+#         CustomerProfile.objects.filter(id=id).update(first_name = first_name)
+#         return HttpResponse("Modified First Name")
 
-#Modifing Last Name 
-@transaction.atomic
-@api_view(['PUT'])
-def lname_update_api(request, id):
-    if request.method =='PUT':
-        last_name = request.POST['last_name']
-        CustomerProfile.objects.filter(id=id).update(last_name = last_name)
-        return HttpResponse("Modified Last Name")
+# #Modifing Last Name 
+# @transaction.atomic
+# @api_view(['PUT'])
+# def lname_update_api(request, id):
+#     if request.method =='PUT':
+#         last_name = request.POST['last_name']
+#         CustomerProfile.objects.filter(id=id).update(last_name = last_name)
+#         return HttpResponse("Modified Last Name")
 
-#Modifing Email
-@transaction.atomic
-@api_view(['PUT'])
-def email_update_api(request,id):
-    if request.method == 'PUT':
-        update_email = request.POST['email']
+# #Modifing Email
+# @transaction.atomic
+# @api_view(['PUT'])
+# def email_update_api(request,id):
+#     if request.method == 'PUT':
+#         update_email = request.POST['email']
     
-        CustomerProfile.objects.filter(id=id).update(email = update_email)
-        return HttpResponse("Modified Email")
+#         CustomerProfile.objects.filter(id=id).update(email = update_email)
+#         return HttpResponse("Modified Email")
 
 
 # Moving Fav Product to WishList
 @transaction.atomic
 @api_view(['POST'])
-def wish_list_api(request,id,pid):
+def wish_list_api(request,token,pid):
+    try:
+        # user = CustomerProfile.objects.get(pk=id)
+        u_token = KnoxAuthtoken.objects.get(token_key = token)
+        a = u_token.user_id
+        use = CustomerProfile.objects.get(id=a)
+        user = use.id
+    except user.DoesNotExist:
+        return HttpResponse(status=404)
+
     if request.method =='POST':
-        user = CustomerProfile.objects.get(pk = id)
+        user = CustomerProfile.objects.get(pk = user)
         pro= Product.objects.get(pk= pid)
 
         price = pro.unit_price
@@ -168,10 +192,18 @@ def wish_list_api(request,id,pid):
 # User ADD Address API
 @transaction.atomic
 @api_view(['POST'])
-def add_address_api(request,id):
-    user = CustomerProfile.objects.get(pk=id)
+def add_address_api(request,token):
+    try:
+        # user = CustomerProfile.objects.get(pk=id)
+        u_token = KnoxAuthtoken.objects.get(token_key = token)
+        a = u_token.user_id
+        use = CustomerProfile.objects.get(id=a)
+        user = use.id
+    except user.DoesNotExist:
+        return HttpResponse(status=404)
+
     if request.method == 'POST':
-        name = user.username
+        name = use.username
         mobile = request.POST['mobile_number']
         address = request.POST['address']
         near_by = request.POST['near_by']
@@ -181,7 +213,7 @@ def add_address_api(request,id):
         country = request.POST['country']
         zip = request.POST['postal_code']
         address = CustomerAddress.objects.create(
-            customer = user, 
+            customer = use, 
             type = AddressType.objects.last(),
             name = name,
             mobile_number = mobile,
@@ -201,10 +233,18 @@ def add_address_api(request,id):
 
 @transaction.atomic
 @api_view(['DELETE'])
-def delete_address_api(request, id,aid):
-    user = CustomerProfile.objects.get(pk=id)
+def delete_address_api(request, token,aid):
+    try:
+        # user = CustomerProfile.objects.get(pk=id)
+        u_token = KnoxAuthtoken.objects.get(token_key = token)
+        a = u_token.user_id
+        use = CustomerProfile.objects.get(id=a)
+        user = use.id
+    except user.DoesNotExist:
+        return HttpResponse(status=404)
+
     if request.method =='DELETE':
-        CustomerAddress.objects.filter(customer = user.id).filter(pk = aid).delete()
+        CustomerAddress.objects.filter(customer = user).filter(pk = aid).delete()
         return HttpResponse("Deleted Successfully")
     else:
         return HttpResponse('Customer Address Not Found')
@@ -215,16 +255,25 @@ def delete_address_api(request, id,aid):
 # ADDING PRODUCT TO CART FOR FIRST TIME
 @transaction.atomic
 @api_view(['POST'])
-def add_to_cart_api(request,id,pid,qty=1):
-    user = CustomerProfile.objects.get(pk=id)
+def add_to_cart_api(request,token,pid,qty=1):
+    try:
+        # user = CustomerProfile.objects.get(pk=id)
+        u_token = KnoxAuthtoken.objects.get(token_key = token)
+        a = u_token.user_id
+        use = CustomerProfile.objects.get(id=a)
+        user = use.id
+    except user.DoesNotExist:
+        return HttpResponse(status=404)
+    
     product  = Product.objects.get(pk=pid)
+    
     if request.method == 'POST':
         if product.available_qty >= qty:
-            if Cart.objects.filter(product=pid, customer=id):
+            if Cart.objects.filter(product=pid, customer=user):
                 return HttpResponse("Alredy this product exists in your cart")
             else :
-                cart= Cart.objects.create(
-                    customer = user,
+                Cart.objects.create(
+                    customer = use,
                     product = product,
                     quantity = qty,
                     price = product.unit_price,
@@ -240,17 +289,21 @@ def add_to_cart_api(request,id,pid,qty=1):
 # REMOVING THE PRODUCT FROM USER CART
 @transaction.atomic
 @api_view(['DELETE'])
-def delete_from_cart_api(request,id,pid):
+def delete_from_cart_api(request,token,pid):
     if request.method == 'DELETE':
-        uid = CustomerProfile.objects.get(pk=id)
-        userid = uid.id
+        u_token = KnoxAuthtoken.objects.get(token_key = token)
+        a = u_token.user_id
+        use = CustomerProfile.objects.get(id=a)
+        user = use.id
+
         capid = Cart.objects.get(product=pid)
         cartqnty = capid.quantity
+
         prid = Product.objects.get(pk=pid)
         productid = prid.id
         product_avl_quantity = prid.available_qty
         try:
-            Cart.objects.filter(product=productid, customer=userid).delete()
+            Cart.objects.filter(product=productid, customer=user).delete()
             Product.objects.filter(id=productid).update(available_qty=product_avl_quantity+cartqnty)
             return HttpResponse('Your product successfully Removed from the cart')
         except:
@@ -260,9 +313,12 @@ def delete_from_cart_api(request,id,pid):
 # ADDING EXTRA QUANTITYT TO EXSISTING PRODUCT
 @transaction.atomic
 @api_view(['PUT'])
-def cart_quantity_add_api(request,id,pid,qty=1):
+def cart_quantity_add_api(request,token,pid,qty=1):
     if request.method == 'PUT':
-        user = CustomerProfile.objects.get(pk = id)
+        u_token = KnoxAuthtoken.objects.get(token_key = token)
+        a = u_token.user_id
+        use = CustomerProfile.objects.get(id=a)
+        user = use.id
         product = Product.objects.get(pk = pid)
 
         cart = Cart.objects.get(product = pid)
@@ -282,9 +338,13 @@ def cart_quantity_add_api(request,id,pid,qty=1):
 # REMOVING EXTRA QUANTITYT TO EXSISTING PRODUCT
 @transaction.atomic
 @api_view(['PUT'])
-def cart_quantity_remove_api(request,id,pid,qty=1):
+def cart_quantity_remove_api(request,token,pid,qty=1):
     if request.method == 'PUT':
-        user = CustomerProfile.objects.get(pk = id)
+        u_token = KnoxAuthtoken.objects.get(token_key = token)
+        a = u_token.user_id
+        use = CustomerProfile.objects.get(id=a)
+        user = use.id
+
         product = Product.objects.get(pk = pid)
 
         cart = Cart.objects.get(product = pid)
@@ -304,9 +364,14 @@ def cart_quantity_remove_api(request,id,pid,qty=1):
 # Fetch User Cart Details
 @transaction.atomic
 @api_view(['GET'])
-def cart_details_api(request, id):
+def cart_details_api(request, token):
     if request.method == 'GET':
-        cart = Cart.objects.filter(customer = id)
+        u_token = KnoxAuthtoken.objects.get(token_key = token)
+        a = u_token.user_id
+        use = CustomerProfile.objects.get(id=a)
+        user = use.id
+
+        cart = Cart.objects.filter(customer = user)
         data = list(cart.values())
         return JsonResponse(data, safe=False)
 
@@ -328,11 +393,14 @@ def products(request):
 
 @transaction.atomic
 @api_view(['POST'])
-def searchbar(request,id):
+def searchbar(request,token):
     if request.method == 'POST':
-        user = CustomerProfile.objects.get(pk=id)
+        u_token = KnoxAuthtoken.objects.get(token_key = token)
+        a = u_token.user_id
+        use = CustomerProfile.objects.get(id=a)
+
         name = request.POST['name']
-        search = Search_bar_history.objects.create(customer = user, search_item = name)
+        search = Search_bar_history.objects.create(customer = use, search_item = name)
         search.save()
         items  = Product.objects.filter(Q(product_name__startswith = name)| Q(product_name__icontains= name))
 
@@ -390,11 +458,14 @@ def gadget_category_api(request):
             #  ****************Recommended Products API*********************
 @transaction.atomic()
 @api_view(['GET'])
-def recommendation_api(request,id):
+def recommendation_api(request,token):
     if request.method == 'GET':
-        user = CustomerProfile.objects.get(pk = id)
-        id  = user.id
-        recmmd = Search_bar_history.objects.filter(customer= id).order_by('-created_at')[:5]
+        u_token = KnoxAuthtoken.objects.get(token_key = token)
+        a = u_token.user_id
+        use = CustomerProfile.objects.get(id=a)
+        user = use.id
+
+        recmmd = Search_bar_history.objects.filter(customer= user).order_by('-created_at')[:5]
         data = list(recmmd.values())
         return JsonResponse(data,safe=False)
 
@@ -445,22 +516,30 @@ from django.db.models import Avg
 @transaction.atomic
 @api_view(['POST'])
 
-def review(request,uid,pid):
+def review(request,token,pid):
+    try:
+        # user = CustomerProfile.objects.get(pk=id)
+        u_token = KnoxAuthtoken.objects.get(token_key = token)
+        a = u_token.user_id
+        use = CustomerProfile.objects.get(id=a)
+        user = use.id
+    except user.DoesNotExist:
+        return HttpResponse(status=404)
+
     if request.method == 'POST':
         rating = request.POST['rating']
         comments = request.POST['comments']
-
-        userid = CustomerProfile.objects.get(id=uid)
+        
         productid = Product.objects.get(id=pid)
 
-        review = Reviews.objects.filter(user=uid, product=pid)
+        review = Reviews.objects.filter(customer=user, product=pid)
         if review.exists():
             return HttpResponse("Review exists")
         if int(rating) <= 5:
-            Reviews.objects.create(user=userid, product=productid, rating=rating, comments=comments)
+            Reviews.objects.create(customer=use, product=productid, rating=rating, comments=comments)
             query = Reviews.objects.filter(product=pid).values_list('rating')
             queryavg = query.aggregate(Avg('rating')).get('rating__avg')
-            Product.objects.filter(Product_id=pid).update(avg_rating=queryavg)
+            # Product.objects.filter(id=pid).update(avg_rating=queryavg)
             return HttpResponse('Success')
         else:
             return HttpResponse('Error')    
@@ -476,4 +555,3 @@ def topratedproducts(request):
         # userid = CustomerProfile.objects.filter(id = uid)
         products = Product.objects.filter(avg_rating__gte = 4).values()
         return Response(products)
-        

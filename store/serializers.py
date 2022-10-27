@@ -40,9 +40,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         last_name = validated_data.get('last_name')
         mobile = validated_data.get('mobile_number')
 
-        user = CustomerProfile.objects.create(
+        user = CustomerProfile.objects.create_user(
             username = username,
-            password = make_password(password),
+            # password = make_password(password),
+            password = password,
             email = email,
             first_name = first_name,
             last_name = last_name,
