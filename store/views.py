@@ -124,12 +124,12 @@ def reset_pwd_api(request,token):
     else:    
         if request.method == 'PUT':
 
-        change_password = request.POST['password']
-        pwd = make_password(change_password)
-        CustomerProfile.objects.filter(id = user).update(password = pwd)
-        cust = CustomerProfile.objects.filter(id = user)
-        data = list(cust.values('first_name', 'last_name','username'))
-        return JsonResponse(data, safe=False)
+            change_password = request.POST['password']
+            pwd = make_password(change_password)
+            CustomerProfile.objects.filter(id = user).update(password = pwd)
+            cust = CustomerProfile.objects.filter(id = user)
+            data = list(cust.values('first_name', 'last_name','username'))
+            return JsonResponse(data, safe=False)
         
 # # Modifing First Name 
 # @transaction.atomic
