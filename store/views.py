@@ -124,12 +124,41 @@ def reset_pwd_api(request,token):
     else:    
         if request.method == 'PUT':
 
-            change_password = request.POST['password']
-            pwd = make_password(change_password)
-            CustomerProfile.objects.filter(id = user).update(password = pwd)
-            cust = CustomerProfile.objects.filter(id = user)
-            data = list(cust.values('first_name', 'last_name','username'))
-            return JsonResponse(data, safe=False)
+        change_password = request.POST['password']
+        pwd = make_password(change_password)
+        CustomerProfile.objects.filter(id = user).update(password = pwd)
+        cust = CustomerProfile.objects.filter(id = user)
+        data = list(cust.values('first_name', 'last_name','username'))
+        return JsonResponse(data, safe=False)
+        
+# # Modifing First Name 
+# @transaction.atomic
+# @api_view(['PUT'])
+# def fname_update_api(request, id):
+#     if request.method =='PUT':
+#         first_name = request.POST['first_name']
+#         CustomerProfile.objects.filter(id=id).update(first_name = first_name)
+#         return HttpResponse("Modified First Name")
+
+# #Modifing Last Name 
+# @transaction.atomic
+# @api_view(['PUT'])
+# def lname_update_api(request, id):
+#     if request.method =='PUT':
+#         last_name = request.POST['last_name']
+#         CustomerProfile.objects.filter(id=id).update(last_name = last_name)
+#         return HttpResponse("Modified Last Name")
+
+# #Modifing Email
+# @transaction.atomic
+# @api_view(['PUT'])
+# def email_update_api(request,id):
+#     if request.method == 'PUT':
+#         update_email = request.POST['email']
+    
+#         CustomerProfile.objects.filter(id=id).update(email = update_email)
+#         return HttpResponse("Modified Email")
+
 
 # Moving Fav Product to WishList
 @transaction.atomic
