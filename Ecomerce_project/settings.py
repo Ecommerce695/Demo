@@ -29,11 +29,9 @@ DEBUG = True
 ALLOWED_HOSTS = ['50.18.24.167', '127.0.0.1','localhost']
 
 #  Customizing Auth_User Model with CustomerProfile Model
-AUTH_USER_MODEL =   "store.CustomerProfile"
+AUTH_USER_MODEL =   "store.UserProfile"
 
 # Auto Generated Fields 
-DEFAULT_AUTO_FIELD = 'django.db.models.UUIDField'
-
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 
@@ -46,10 +44,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'rest_framework',
     'rest_framework.authtoken',
     'knox',
     'corsheaders',
+
     # App name
     'store',
 ]
@@ -74,6 +74,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
     #  Messages in Django
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',

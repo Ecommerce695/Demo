@@ -4,7 +4,7 @@ from datetime import datetime
 from django.db import transaction
 from pytz import utc
 from .serializers import RegisterSerializer, UserprofileSerializer
-from .models import AddressType, Category, CustomerAddress,Reviews, CustomerProfile, Product, VendorOrgProfile, Wishlist, Cart, Search_bar_history
+from .models import AddressType, Category, CustomerAddress,Reviews, UserProfile, Product, VendorOrgProfile, Wishlist, Cart, Search_bar_history
 from .models import KnoxAuthtoken
 from rest_framework.response import Response
 from django.http import JsonResponse
@@ -79,7 +79,7 @@ def user_detail_api(request, token):
     try:
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
-        user = CustomerProfile.objects.get(id=a)
+        user = UserProfile.objects.get(id=a)
         print(user)
     except user.DoesNotExist:
         return HttpResponse("User Doesn't Exists")
@@ -113,7 +113,7 @@ def reset_pwd_api(request,token):
     try:
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
-        use = CustomerProfile.objects.get(id=a)
+        use = UserProfile.objects.get(id=a)
         user = use.id
     except user.DoesNotExist:
         return HttpResponse(status=404)
@@ -126,8 +126,8 @@ def reset_pwd_api(request,token):
 
             change_password = request.POST['password']
             pwd = make_password(change_password)
-            CustomerProfile.objects.filter(id = user).update(password = pwd)
-            cust = CustomerProfile.objects.filter(id = user)
+            UserProfile.objects.filter(id = user).update(password = pwd)
+            cust = UserProfile.objects.filter(id = user)
             data = list(cust.values('first_name', 'last_name','username'))
             return JsonResponse(data, safe=False)
         
@@ -167,13 +167,13 @@ def wish_list_api(request,token,pid):
     try:
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
-        use = CustomerProfile.objects.get(id=a)
+        use = UserProfile.objects.get(id=a)
         user = use.id
     except user.DoesNotExist:
         return HttpResponse(status=404)
 
     if request.method =='POST':
-        user = CustomerProfile.objects.get(pk = user)
+        user = UserProfile.objects.get(pk = user)
         pro= Product.objects.get(pk= pid)
         price = pro.unit_price
 
@@ -192,7 +192,7 @@ def add_address_api(request,token):
     try:
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
-        use = CustomerProfile.objects.get(id=a)
+        use = UserProfile.objects.get(id=a)
         user = use.id
     except user.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -237,7 +237,7 @@ def delete_address_api(request, token,aid):
         # user = CustomerProfile.objects.get(pk=id)
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
-        use = CustomerProfile.objects.get(id=a)
+        use = UserProfile.objects.get(id=a)
         user = use.id
     except user.DoesNotExist:
         return HttpResponse(status=404)
@@ -262,7 +262,7 @@ def add_to_cart_api(request,token,pid,qty=1):
         # user = CustomerProfile.objects.get(pk=id)
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
-        use = CustomerProfile.objects.get(id=a)
+        use = UserProfile.objects.get(id=a)
         user = use.id
     except user.DoesNotExist:
         return HttpResponse(status=404)
@@ -299,7 +299,7 @@ def delete_from_cart_api(request,token,pid):
     if request.method == 'DELETE':
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
-        use = CustomerProfile.objects.get(id=a)
+        use = UserProfile.objects.get(id=a)
         user = use.id
 
         capid = Cart.objects.get(product=pid)
@@ -328,7 +328,7 @@ def cart_quantity_add_api(request,token,pid,qty=1):
     if request.method == 'PUT':
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
-        use = CustomerProfile.objects.get(id=a)
+        use = UserProfile.objects.get(id=a)
         user = use.id
 
         product = Product.objects.get(pk = pid)
@@ -359,7 +359,7 @@ def cart_quantity_remove_api(request,token,pid,qty=1):
     if request.method == 'PUT':
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
-        use = CustomerProfile.objects.get(id=a)
+        use = UserProfile.objects.get(id=a)
         user = use.id
 
         product = Product.objects.get(pk = pid)
@@ -387,7 +387,7 @@ def cart_details_api(request, token):
     if request.method == 'GET':
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
-        use = CustomerProfile.objects.get(id=a)
+        use = UserProfile.objects.get(id=a)
         user = use.id
         if u_token.expiry < datetime.now(utc):
             KnoxAuthtoken.objects.filter(user=user).delete()
@@ -418,7 +418,7 @@ def searchbar(request,token):
     if request.method == 'POST':
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
-        use = CustomerProfile.objects.get(id=a)
+        use = UserProfile.objects.get(id=a)
 
         name = request.POST['name']
         search = Search_bar_history.objects.create(customer = use, search_item = name)
@@ -487,7 +487,7 @@ def recommendation_api(request,token):
     if request.method == 'GET':
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
-        use = CustomerProfile.objects.get(id=a)
+        use = UserProfile.objects.get(id=a)
         user = use.id
 
         if u_token.expiry < datetime.now(utc):
@@ -551,7 +551,7 @@ def review_api(request,token,pid):
         # user = CustomerProfile.objects.get(pk=id)
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
-        use = CustomerProfile.objects.get(id=a)
+        use = UserProfile.objects.get(id=a)
         user = use.id
     except user.DoesNotExist:
         return HttpResponse(status=404)
@@ -586,7 +586,6 @@ def review_api(request,token,pid):
 @api_view(['GET'])
 def topratedproducts_api(request):
     if request.method =='GET':
-        # userid = CustomerProfile.objects.filter(id = uid)
         products = Product.objects.filter(avg_rating__gte = 4).values()
         return Response(products)
 
@@ -598,7 +597,7 @@ def vendor_register_api(request,token):
     try:
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
-        use = CustomerProfile.objects.get(id=a)
+        use = UserProfile.objects.get(id=a)
         user = use.id
     except user.DoesNotExist:
         return HttpResponse(status=404)
@@ -637,7 +636,7 @@ def vendor_register_api(request,token):
             )
             
             vendor.save()
-            CustomerProfile.objects.filter(id = user).update(is_staff='True')
+            UserProfile.objects.filter(id = user).update(is_staff='True')
             return Response (
                 {
                     'org_id' : vendor.org_id,

@@ -1,12 +1,12 @@
 from rest_framework import serializers
-from store.models import CustomerProfile, Wishlist,CustomerAddress
+from store.models import CustomerAddress, Wishlist,UserProfile
 from rest_framework import serializers , validators
 from django.contrib.auth.hashers import make_password
 
 
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CustomerProfile
+        model = UserProfile
         fields = ('username', 'password', 'email', 'first_name','last_name','mobile_number')
 
         extra_kwargs = {
@@ -16,7 +16,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                 "allow_blank" : False,
                 "validators" : [
                     validators.UniqueValidator(
-                        CustomerProfile.objects.all(), "Email Id already Exists"
+                        UserProfile.objects.all(), "Email Id already Exists"
                     )
                 ]
             },
@@ -25,7 +25,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                 "allow_blank" : False,
                 "validators" : [
                     validators.UniqueValidator(
-                        CustomerProfile.objects.all(), "Mobile Number already Exists"
+                        UserProfile.objects.all(), "Mobile Number already Exists"
                     )
                 ]
             }
@@ -40,7 +40,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         last_name = validated_data.get('last_name')
         mobile = validated_data.get('mobile_number')
 
-        user = CustomerProfile.objects.create_user(
+        user = UserProfile.objects.create_user(
             username = username,
             # password = make_password(password),
             password = password,
@@ -56,7 +56,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 class UserprofileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CustomerProfile
+        model = UserProfile
         fields = ['first_name','last_name','email','mobile_number']
 
 class UserAddress(serializers.ModelSerializer):
@@ -72,7 +72,7 @@ class UserAddress(serializers.ModelSerializer):
 
 class ResetPasswordSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CustomerProfile
+        model = UserProfile
         fields = ['password']
 
         extra_kwargs = {
@@ -82,7 +82,7 @@ class ResetPasswordSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.get('password')
 
-        user = CustomerProfile.objects.update_user(
+        user = UserProfile.objects.update_user(
             password = password
         )
 

@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser
 
 
 
-class CustomerProfile(AbstractUser):
+class UserProfile(AbstractUser):
     id = models.AutoField(primary_key=True, db_column='customer_id')
     first_name = models.CharField(max_length=200, blank=True, null=True)
     last_name = models.CharField(max_length=200, blank=True, null=True)
@@ -19,13 +19,13 @@ class CustomerProfile(AbstractUser):
     is_superuser = models.BooleanField(default=False)
 
     class Meta:
-        db_table = 'customer_profile'
+        db_table = 'user_profile'
         ordering = ['id']
 
 class KnoxAuthtoken(models.Model):
     digest = models.CharField(primary_key=True, max_length=128)
     created = models.DateTimeField()
-    user = models.ForeignKey(CustomerProfile, models.CASCADE)
+    user = models.ForeignKey(UserProfile, models.CASCADE)
     expiry = models.DateTimeField(blank=True, null=True)
     token_key = models.CharField(max_length=8)
 
@@ -53,7 +53,7 @@ class Category(models.Model):
 
 class CustomerAddress(models.Model):
     type = models.ForeignKey(AddressType, models.CASCADE, db_column='type', blank=True, null=True)
-    customer = models.ForeignKey('CustomerProfile', models.CASCADE, blank=True, null=True, db_column='customer_id')
+    customer = models.ForeignKey('UserProfile', models.CASCADE, blank=True, null=True, db_column='customer_id')
     name = models.CharField(max_length=200, blank=True, null=True)
     mobile_number = models.PositiveBigIntegerField(blank=True, null=True)
     address = models.CharField(db_column='house_no/plot_no', max_length=500, blank=True, null=True)  # Field renamed to remove unsuitable characters.
@@ -70,7 +70,7 @@ class CustomerAddress(models.Model):
 
 
 class PasswordReset(models.Model):
-    email = models.ForeignKey(CustomerProfile, models.CASCADE, db_column='email', blank=True, null=True)
+    email = models.ForeignKey(UserProfile, models.CASCADE, db_column='email', blank=True, null=True)
     token = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(default=datetime.datetime.now())
 
@@ -80,7 +80,7 @@ class PasswordReset(models.Model):
 
 class VendorOrgProfile(models.Model):
     id = models.AutoField(primary_key=True, db_column='vendor_id')
-    customer = models.ForeignKey(CustomerProfile, models.CASCADE, db_column='customer_id', null=True)
+    customer = models.ForeignKey(UserProfile, models.CASCADE, db_column='customer_id', null=True)
     org_id = models.CharField(max_length=255, blank=True, null=True)
     org_name = models.CharField(max_length=255, blank=True, null=True)
     email = models.EmailField(max_length=255, blank=True, null=True)
@@ -141,7 +141,7 @@ class ProductLaptop(models.Model):
 
 class Cart(models.Model):
     id = models.AutoField(primary_key=True,db_column='cart_id')
-    customer = models.ForeignKey('CustomerProfile', models.CASCADE, blank=True, null=True)
+    customer = models.ForeignKey('UserProfile', models.CASCADE, blank=True, null=True)
     product = models.ForeignKey(Product,db_column='product_id',on_delete=models.CASCADE,blank=True, null=True)
     quantity = models.IntegerField(blank=True, null=True)
     price = models.FloatField(blank=True, null=True)
@@ -174,7 +174,7 @@ class ProductMobile(models.Model):
 
 
 class Wishlist(models.Model):
-    customer = models.ForeignKey(CustomerProfile, models.CASCADE, blank=True, null=True)
+    customer = models.ForeignKey(UserProfile, models.CASCADE, blank=True, null=True)
     product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
     price = models.FloatField(blank=True, null=True)
     created_at = models.DateTimeField(default=datetime.datetime.now())
@@ -186,7 +186,7 @@ class Wishlist(models.Model):
 
 class Search_bar_history(models.Model):
     id = models.AutoField(primary_key=True,db_column = 'search_id')
-    customer = models.ForeignKey(CustomerProfile,on_delete = models.CASCADE, db_column='customer_id')
+    customer = models.ForeignKey(UserProfile,on_delete = models.CASCADE, db_column='customer_id')
     search_item = models.CharField(max_length = 100, null= True, blank=True)
     created_at = models.DateTimeField(default = datetime.datetime.now())
 
@@ -195,7 +195,7 @@ class Search_bar_history(models.Model):
 
 class Reviews(models.Model):
     id = models.AutoField(primary_key=True, db_column='review_id')
-    customer = models.ForeignKey(CustomerProfile, on_delete=models.CASCADE, db_column='customer_id',  null=True)
+    customer = models.ForeignKey(UserProfile, on_delete=models.CASCADE, db_column='customer_id',  null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, db_column='product_id')
     comments = models.TextField()
     rating = models.FloatField()
