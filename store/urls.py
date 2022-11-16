@@ -57,7 +57,7 @@ urlpatterns = [
     # POST Method
     path('review/<token>/<int:pid>/', views.review_api, name='review'),
     # GET Method
-    path('topproducts/', views.topratedproducts_api, name='topproducts'),
+    # path('topproducts/', views.topratedproducts_api, name='topproducts'),
     # POST(Vendor Organization Registration)
     path('vendor/register/<token>/', views.vendor_register_api, name='vendor_register_form'),
 ]

@@ -4,7 +4,7 @@ from datetime import datetime
 from django.db import transaction
 from pytz import utc
 from .serializers import RegisterSerializer, UserprofileSerializer
-from .models import AddressType, Category, CustomerAddress,Reviews, UserProfile, Product, VendorOrgProfile, Wishlist, Cart, Search_bar_history
+from .models import AddressType, Category, UserAddress,Reviews, UserProfile, Product, VendorOrgProfile, Wishlist, Cart, Search_bar_history
 from .models import KnoxAuthtoken
 from rest_framework.response import Response
 from django.http import JsonResponse
@@ -131,34 +131,6 @@ def reset_pwd_api(request,token):
             data = list(cust.values('first_name', 'last_name','username'))
             return JsonResponse(data, safe=False)
         
-# # Modifing First Name 
-# @transaction.atomic
-# @api_view(['PUT'])
-# def fname_update_api(request, id):
-#     if request.method =='PUT':
-#         first_name = request.POST['first_name']
-#         CustomerProfile.objects.filter(id=id).update(first_name = first_name)
-#         return HttpResponse("Modified First Name")
-
-# #Modifing Last Name 
-# @transaction.atomic
-# @api_view(['PUT'])
-# def lname_update_api(request, id):
-#     if request.method =='PUT':
-#         last_name = request.POST['last_name']
-#         CustomerProfile.objects.filter(id=id).update(last_name = last_name)
-#         return HttpResponse("Modified Last Name")
-
-# #Modifing Email
-# @transaction.atomic
-# @api_view(['PUT'])
-# def email_update_api(request,id):
-#     if request.method == 'PUT':
-#         update_email = request.POST['email']
-    
-#         CustomerProfile.objects.filter(id=id).update(email = update_email)
-#         return HttpResponse("Modified Email")
-
 
 # Moving Fav Product to WishList
 @transaction.atomic
@@ -177,10 +149,10 @@ def wish_list_api(request,token,pid):
         pro= Product.objects.get(pk= pid)
         price = pro.unit_price
 
-        if Wishlist.objects.filter(product_id = pro, customer=user):
+        if Wishlist.objects.filter(product_id = pro, user=user):
             return HttpResponse("Product already Exists")
         else:
-            wishlist= Wishlist.objects.create(product_id = pro, customer=user, price = price )
+            Wishlist.objects.create(product_id = pro, user=user, price = price )
             return Response ("Product Moved to Wishlist Sucessfull")
     else:
         return HttpResponse("Login required")   
@@ -211,8 +183,8 @@ def add_address_api(request,token):
             state = request.POST['state']
             country = request.POST['country']
             zip = request.POST['postal_code']
-            address = CustomerAddress.objects.create(
-                customer = use, 
+            address = UserAddress.objects.create(
+                user = use, 
                 type = AddressType.objects.last(),
                 name = name,
                 mobile_number = mobile,
@@ -234,7 +206,6 @@ def add_address_api(request,token):
 @api_view(['DELETE'])
 def delete_address_api(request, token,aid):
     try:
-        # user = CustomerProfile.objects.get(pk=id)
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
         use = UserProfile.objects.get(id=a)
@@ -247,10 +218,10 @@ def delete_address_api(request, token,aid):
         return HttpResponse("Session Expired, Please login again")
     else:
         if request.method =='DELETE':
-            CustomerAddress.objects.filter(customer = user).filter(pk = aid).delete()
+            UserAddress.objects.filter(user = user).filter(pk = aid).delete()
             return HttpResponse("Deleted Successfully")
         else:
-            return HttpResponse('Customer Address Not Found')
+            return HttpResponse('User Address Not Found')
    
 #*************************CART Module API******************************
 
@@ -259,7 +230,6 @@ def delete_address_api(request, token,aid):
 @api_view(['POST'])
 def add_to_cart_api(request,token,pid,qty=1):
     try:
-        # user = CustomerProfile.objects.get(pk=id)
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
         use = UserProfile.objects.get(id=a)
@@ -274,11 +244,11 @@ def add_to_cart_api(request,token,pid,qty=1):
     else:  
         if request.method == 'POST':
             if product.available_qty >= qty:
-                if Cart.objects.filter(product=pid, customer=user):
+                if Cart.objects.filter(product=pid, user=user):
                     return HttpResponse("Alredy this product exists in your cart")
                 else :
                     Cart.objects.create(
-                        customer = use,
+                        user = use,
                         product = product,
                         quantity = qty,
                         price = product.unit_price,
@@ -314,7 +284,7 @@ def delete_from_cart_api(request,token,pid):
             return HttpResponse("Session Expired, Please login again")
         else:
                 try:
-                    Cart.objects.filter(product=productid, customer=user).delete()
+                    Cart.objects.filter(product=productid, user=user).delete()
                     Product.objects.filter(id=productid).update(available_qty=product_avl_quantity+cartqnty)
                     return HttpResponse('Your product successfully Removed from the cart')
                 except:
@@ -340,7 +310,7 @@ def cart_quantity_add_api(request,token,pid,qty=1):
             return HttpResponse("Session Expired, Please login again")
         else:
                 if qty <= cart.quantity and cart.quantity >0:
-                    Cart.objects.filter(customer = user).filter(product = pid).update(
+                    Cart.objects.filter(user = user).filter(product = pid).update(
                         quantity = cart.quantity + qty, 
                         cart_value = cart.cart_value + product.unit_price
                         )
@@ -370,14 +340,14 @@ def cart_quantity_remove_api(request,token,pid,qty=1):
             return HttpResponse("Session Expired, Please login again")
         else:
                 if cart.quantity >=qty:
-                    Cart.objects.filter(customer = user).filter(product = pid).update(
+                    Cart.objects.filter(user = user).filter(product = pid).update(
                         quantity = cart.quantity - qty, 
                         cart_value = cart.cart_value - product.unit_price
                         )
                     Product.objects.filter(id = pid).update(available_qty = product.available_qty + qty)
                     return HttpResponse("Quantity Removed Sucessfull")
                 elif cart.quantity == 0 and cart.quantity < 1:
-                    Cart.objects.filter(product = pid).filter(customer= user).delete()
+                    Cart.objects.filter(product = pid).filter(user= user).delete()
                     return HttpResponse("Product Removed From Cart Sucessfully") 
 
 # Fetch User Cart Details
@@ -393,7 +363,7 @@ def cart_details_api(request, token):
             KnoxAuthtoken.objects.filter(user=user).delete()
             return HttpResponse("Session Expired, Please login again")
         else:
-                cart = Cart.objects.filter(customer = user)
+                cart = Cart.objects.filter(user = user)
                 data = list(cart.values())
                 return JsonResponse(data, safe=False)   
 
@@ -421,7 +391,7 @@ def searchbar(request,token):
         use = UserProfile.objects.get(id=a)
 
         name = request.POST['name']
-        search = Search_bar_history.objects.create(customer = use, search_item = name)
+        search = Search_bar_history.objects.create(user = use, search_item = name)
         search.save()
         items  = Product.objects.filter(Q(product_name__startswith = name)| Q(product_name__icontains= name))
 
@@ -494,7 +464,7 @@ def recommendation_api(request,token):
             KnoxAuthtoken.objects.filter(user=user).delete()
             return HttpResponse("Session Expired, Please login again")
         else:
-                recmmd = Search_bar_history.objects.filter(customer= user).order_by('-created_at')[:5]
+                recmmd = Search_bar_history.objects.filter(user= user).order_by('-created_at')[:5]
                 data = list(recmmd.values())
                 return JsonResponse(data,safe=False)
     else:
@@ -548,7 +518,7 @@ from django.db.models import Avg
 @api_view(['POST'])
 def review_api(request,token,pid):
     try:
-        # user = CustomerProfile.objects.get(pk=id)
+        
         u_token = KnoxAuthtoken.objects.get(token_key = token)
         a = u_token.user_id
         use = UserProfile.objects.get(id=a)
@@ -566,11 +536,11 @@ def review_api(request,token,pid):
             
             productid = Product.objects.get(id=pid)
 
-            review = Reviews.objects.filter(customer=user, product=pid)
+            review = Reviews.objects.filter(user=user, product=pid)
             if review.exists():
                 return HttpResponse("Review exists")
             if int(rating) <= 5:
-                Reviews.objects.create(customer=use, product=productid, rating=rating, comments=comments)
+                Reviews.objects.create(user=use, product=productid, rating=rating, comments=comments)
                 query = Reviews.objects.filter(product=pid).values_list('rating')
                 queryavg = query.aggregate(Avg('rating')).get('rating__avg')
                 # Product.objects.filter(id=pid).update(avg_rating=queryavg)
@@ -581,13 +551,13 @@ def review_api(request,token,pid):
             return HttpResponse('Error')
     
 
-##### GET TOP RATED PRODUCTS
-@transaction.atomic
-@api_view(['GET'])
-def topratedproducts_api(request):
-    if request.method =='GET':
-        products = Product.objects.filter(avg_rating__gte = 4).values()
-        return Response(products)
+# ##### GET TOP RATED PRODUCTS
+# @transaction.atomic
+# @api_view(['GET'])
+# def topratedproducts_api(request):
+#     if request.method =='GET':
+#         products = Product.objects.filter(avg_rating__gte = 4).values()
+#         return Response(products)
 
 
 # Vendor Organization Registration Profile
@@ -607,7 +577,7 @@ def vendor_register_api(request,token):
             return HttpResponse("Session Expired, Please login again")
     else:
         if request.method =='POST':
-            customer = use
+            user = use
             org_id = request.POST['org_id']
             org_name = request.POST['org_name']
             email = request.POST['email']
@@ -621,7 +591,7 @@ def vendor_register_api(request,token):
             pincode = request.POST['pincode']
 
             vendor = VendorOrgProfile.objects.create(
-                customer = customer,
+                user = user,
                 org_id = org_id,
                 org_name = org_name,
                 email = email,

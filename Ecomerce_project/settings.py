@@ -28,7 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['50.18.24.167', '127.0.0.1','localhost']
 
-#  Customizing Auth_User Model with CustomerProfile Model
+#  Customizing Auth_User Model with User Profile Model
 AUTH_USER_MODEL =   "store.UserProfile"
 
 # Auto Generated Fields 
@@ -108,7 +108,7 @@ WSGI_APPLICATION = 'Ecomerce_project.wsgi.application'
 DATABASES = {
    'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'Ecomm', 
+        'NAME': 'Ecom', 
         'USER': 'postgres', 
         'PASSWORD': 'Welcome!234',
         'HOST': 'e-commerce.cj3oddyv0bsk.us-west-1.rds.amazonaws.com', 
