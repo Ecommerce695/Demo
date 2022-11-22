@@ -619,3 +619,11 @@ def vendor_register_api(request,token):
         else:
             return HttpResponse('Method Not Allowed')
 
+
+
+
+
+
+
+def abc(request):
+    pass
