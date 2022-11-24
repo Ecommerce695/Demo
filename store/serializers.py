@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from store.models import UserAddress, Wishlist,UserProfile
+from store.models import UserAddress,   UserProfile
 from rest_framework import serializers , validators
 from django.contrib.auth.hashers import make_password
 
@@ -42,7 +42,6 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         user = UserProfile.objects.create_user(
             username = username,
-            # password = make_password(password),
             password = password,
             email = email,
             first_name = first_name,

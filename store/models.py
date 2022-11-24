@@ -15,12 +15,27 @@ class UserProfile(AbstractUser):
     date_joined =models.DateTimeField(default=datetime.datetime.now())
     last_login = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-    is_superuser = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'user_profile'
         ordering = ['id']
+
+
+class Role(models.Model):
+    role_id =models.AutoField(primary_key=True)
+    role = models.CharField(unique=True, max_length=40,blank=True, null=True)
+    role_desc = models.CharField(max_length=255, null=True)
+
+    class Meta: 
+        db_table = 'role'
+
+class UserRole(models.Model):
+    role_id = models.IntegerField( db_column='role_id')
+    user_id = models.IntegerField(db_column='user_id')
+
+    class Meta:
+        db_table= 'user_role'
+        unique_together = (('role_id', 'user_id'))
 
 class KnoxAuthtoken(models.Model):
     digest = models.CharField(primary_key=True, max_length=128)
@@ -52,7 +67,7 @@ class Category(models.Model):
 
 
 class UserAddress(models.Model):
-    type = models.ForeignKey(AddressType, models.CASCADE, db_column='type', blank=True, null=True)
+    type = models.ForeignKey(AddressType, models.CASCADE, db_column='address_type', blank=True, null=True)
     user = models.ForeignKey('UserProfile', models.CASCADE, blank=True, null=True, db_column='user_id')
     name = models.CharField(max_length=200, blank=True, null=True)
     mobile_number = models.PositiveBigIntegerField(blank=True, null=True)
@@ -77,13 +92,12 @@ class PasswordReset(models.Model):
         db_table = 'password_reset'
 
 
-class VendorOrgProfile(models.Model):
-    id = models.AutoField(primary_key=True, db_column='vendor_id')
+class OrgProfile(models.Model):
+    id = models.AutoField(primary_key=True, db_column='org_id')
     user = models.ForeignKey(UserProfile, models.CASCADE, db_column='user_id', null=True)
-    org_id = models.CharField(max_length=255, blank=True, null=True)
     org_name = models.CharField(max_length=255, blank=True, null=True)
     email = models.EmailField(max_length=255, blank=True, null=True)
-    phone_number = models.PositiveBigIntegerField(blank=True, null=True)
+    mobile = models.PositiveBigIntegerField(blank=True, null=True)
     tax_id = models.CharField(max_length=255, blank=True, null=True)
     description = models.TextField(max_length=500, blank=True, null=True)
     address = models.CharField(max_length=500, blank=True, null=True)
@@ -94,14 +108,14 @@ class VendorOrgProfile(models.Model):
     date_joined = models.DateTimeField(default=datetime.datetime.now())
 
     class Meta:
-        db_table = 'vendor_org_profile'
+        db_table = 'org_profile'
 
     def __str__(self):
         return self.org_name
 
 class Product(models.Model):
     id = models.AutoField(primary_key=True, db_column='product_id')
-    vendor = models.ForeignKey(VendorOrgProfile, models.CASCADE, blank=True, null=True,db_column='vendor_id')
+    org_id = models.ForeignKey(OrgProfile, models.CASCADE, blank=True, null=True,db_column='org_id')
     category = models.ForeignKey(Category, models.CASCADE, blank=True, null=True)
     product_name = models.CharField(max_length=500, blank=True, null=True)
     description = models.TextField(null=True, blank=True)
@@ -145,7 +159,7 @@ class Cart(models.Model):
 
 
     class Meta:
-        db_table = 'cart'
+        db_table = 'user_cart'
 
 class ProductMobile(models.Model):
     product = models.ForeignKey(Product, models.CASCADE, db_column='product_id')
@@ -171,17 +185,17 @@ class Wishlist(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'wishlist'
+        db_table = 'user_wishlist'
 
 
-class Search_bar_history(models.Model):
+class Search_History(models.Model):
     id = models.AutoField(primary_key=True,db_column = 'search_id')
     user = models.ForeignKey(UserProfile,on_delete = models.CASCADE, db_column='user_id')
     search_item = models.CharField(max_length = 100, null= True, blank=True)
     created_at = models.DateTimeField(default = datetime.datetime.now())
 
     class Meta:
-        db_table = 'search_bar_history'
+        db_table = 'search_history'
 
 class Reviews(models.Model):
     id = models.AutoField(primary_key=True)
@@ -193,4 +207,5 @@ class Reviews(models.Model):
     created_at = models.DateTimeField(auto_now_add = True)
 
     class Meta:
-        db_table = 'reviews'
+        db_table = 'product_reviews'
+

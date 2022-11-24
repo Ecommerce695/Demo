@@ -1,17 +1,19 @@
 from django.urls import path,include
 from . import views
 
-
 urlpatterns = [
     # User Module APIs
     path('signup/', views.register_api, name='signup'),
     path('login/', views.login_api, name='login'),
     path('logout/', views.logout_api, name='logout'),
     
-    # POST Method
+    # Add Address API
     path('address/<token>/',views.add_address_api, name='address add'),
+
+    # Update Address
+    path('update_address/<token>/',views.update_address, name='update address'),
     
-    # DELETE Method
+    # Delete Address
     path('delete_address/<token>/<int:aid>/',views.delete_address_api, name='address delete'),
 
     # UPDATE Password API
@@ -56,8 +58,12 @@ urlpatterns = [
 
     # POST Method
     path('review/<token>/<int:pid>/', views.review_api, name='review'),
+    
     # GET Method
     # path('topproducts/', views.topratedproducts_api, name='topproducts'),
+
     # POST(Vendor Organization Registration)
     path('vendor/register/<token>/', views.vendor_register_api, name='vendor_register_form'),
+
+    # path('add_products/<token>/', views.vendorproductsadd, name='add products'),
 ]

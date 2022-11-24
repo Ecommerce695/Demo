@@ -4,7 +4,7 @@ from datetime import datetime
 from django.db import transaction
 from pytz import utc
 from .serializers import RegisterSerializer, UserprofileSerializer
-from .models import AddressType, Category, UserAddress,Reviews, UserProfile, Product, VendorOrgProfile, Wishlist, Cart, Search_bar_history
+from .models import AddressType, Category, UserAddress,Reviews, UserProfile, Product, OrgProfile, Wishlist, Cart, Search_History, UserRole, Role
 from .models import KnoxAuthtoken
 from rest_framework.response import Response
 from django.http import JsonResponse
@@ -28,6 +28,9 @@ def register_api(request):
     user = serializer.save()
 
     user.save()
+
+    r = Role.objects.get(role='USER')
+    UserRole.objects.create(role_id=r.role_id, user_id= user.id)
 
     return Response (
         {
@@ -197,8 +200,10 @@ def add_address_api(request,token):
                 postal_code = zip
 
             )
-
-            return HttpResponse('Sucessfull')
+            address.save()
+            address = UserAddress.objects.filter(user = use)
+            data = list(address.values())
+            return JsonResponse(data, safe=False)
 
             # **** Delete Address API*********
 
@@ -222,6 +227,52 @@ def delete_address_api(request, token,aid):
             return HttpResponse("Deleted Successfully")
         else:
             return HttpResponse('User Address Not Found')
+
+
+@transaction.atomic
+@api_view(['PUT'])
+def update_address(request, token):
+    try:
+        u_token = KnoxAuthtoken.objects.get(token_key = token)
+        a = u_token.user_id
+        use = UserProfile.objects.get(id=a)
+        user = use.id
+    except user.DoesNotExist:
+        return HttpResponse(status=404)
+    
+    if u_token.expiry < datetime.now(utc):
+        KnoxAuthtoken.objects.filter(user=user).delete()
+        return HttpResponse("Session Expired, Please login again")
+    else:
+        if request.method =='PUT':
+            name = use.username
+            mobile = request.POST['mobile_number']
+            address = request.POST['address']
+            near_by = request.POST['near_by']
+            street_no = request.POST['street_no']
+            city = request.POST['city']
+            state = request.POST['state']
+            country = request.POST['country']
+            zip = request.POST['postal_code']
+
+            address = UserAddress.objects.filter(user = use).update( 
+                type = AddressType.objects.all().first(),
+                name = name,
+                mobile_number = mobile,
+                address = address,
+                near_by = near_by,
+                street_no = street_no,
+                city = city,
+                state = state,
+                country = country,
+                postal_code = zip
+
+            )
+            address = UserAddress.objects.filter(user = use)
+            data = list(address.values())
+            return JsonResponse(data, safe=False)
+    
+    
    
 #*************************CART Module API******************************
 
@@ -255,7 +306,10 @@ def add_to_cart_api(request,token,pid,qty=1):
                         cart_value = product.unit_price * qty
                     )
                     Product.objects.filter(id=pid).update(available_qty =product.available_qty - qty)
-                    return HttpResponse("Added to Cart")
+                    # return HttpResponse("Added to Cart")
+                    cart = Cart.objects.filter(user = use)
+                    data = list(cart.values())
+                    return JsonResponse(data, safe=False)
             else :  
                 return HttpResponse("Cart Quantity is more that Product Quantity")
         else : 
@@ -391,7 +445,7 @@ def searchbar(request,token):
         use = UserProfile.objects.get(id=a)
 
         name = request.POST['name']
-        search = Search_bar_history.objects.create(user = use, search_item = name)
+        search = Search_History.objects.create(user = use, search_item = name)
         search.save()
         items  = Product.objects.filter(Q(product_name__startswith = name)| Q(product_name__icontains= name))
 
@@ -464,7 +518,7 @@ def recommendation_api(request,token):
             KnoxAuthtoken.objects.filter(user=user).delete()
             return HttpResponse("Session Expired, Please login again")
         else:
-                recmmd = Search_bar_history.objects.filter(user= user).order_by('-created_at')[:5]
+                recmmd = Search_History.objects.filter(user= user).order_by('-created_at')[:5]
                 data = list(recmmd.values())
                 return JsonResponse(data,safe=False)
     else:
@@ -498,7 +552,7 @@ def price_filter_api(request):
         data = list(products.values('id', 'product_name', 'unit_price'))
         return JsonResponse(data, safe=False)
 
-
+# List of Products based on Category Filter
 @transaction.atomic
 @api_view(['GET'])
 def category_name_wise_product_filter_api(request, name):
@@ -569,6 +623,9 @@ def vendor_register_api(request,token):
         a = u_token.user_id
         use = UserProfile.objects.get(id=a)
         user = use.id
+
+        print(use)
+        print(user)
     except user.DoesNotExist:
         return HttpResponse(status=404)
 
@@ -578,10 +635,9 @@ def vendor_register_api(request,token):
     else:
         if request.method =='POST':
             user = use
-            org_id = request.POST['org_id']
             org_name = request.POST['org_name']
             email = request.POST['email']
-            phone_number = request.POST['phone_number']
+            mobile = request.POST['mobile']
             tax_id = request.POST['tax_id']
             description = request.POST['description']
             address = request.POST['address']
@@ -590,12 +646,11 @@ def vendor_register_api(request,token):
             country = request.POST['country']
             pincode = request.POST['pincode']
 
-            vendor = VendorOrgProfile.objects.create(
+            vendor = OrgProfile.objects.create(
                 user = user,
-                org_id = org_id,
                 org_name = org_name,
                 email = email,
-                phone_number = phone_number,
+                mobile = mobile,
                 tax_id = tax_id,
                 description = description,
                 address = address,
@@ -606,10 +661,11 @@ def vendor_register_api(request,token):
             )
             
             vendor.save()
-            UserProfile.objects.filter(id = user).update(is_staff='True')
+            r = Role.objects.get(role='VENDOR')
+            UserRole.objects.create(role_id=r.role_id, user_id= use.id)
             return Response (
                 {
-                    'org_id' : vendor.org_id,
+                    'org_id' : vendor.id,
                     'org_name' : vendor.org_name,
                     'email' : vendor.email,
                     'description' : vendor.description,
@@ -619,3 +675,53 @@ def vendor_register_api(request,token):
         else:
             return HttpResponse('Method Not Allowed')
 
+
+# @transaction.atomic
+# @api_view(['POST'])
+# def vendorproductsadd(request,token):
+#     if request.method == 'POST':
+#         try:
+        
+#             u_token = KnoxAuthtoken.objects.get(token_key = token)
+#             a = u_token.user_id
+#             use = UserProfile.objects.get(id=a)
+#             user = use.id
+            
+#         except user.DoesNotExist:
+#             return HttpResponse(status=404)
+
+#         if u_token.expiry < datetime.now(utc):
+#                 KnoxAuthtoken.objects.filter(user=user).delete()
+#                 return HttpResponse("Session Expired, Please login again")
+#         else:
+#             category_name = request.POST['category_name']
+#             cate = Category.objects.get(category_name=category_name)
+
+#             vendor = OrgProfile.objects.get(user=use)
+        
+#             product_name = request.POST['product_name']
+#             product_description = request.POST['product_description']
+#             product_qty = request.POST['product_qty']
+#             unit_price = request.POST['unit_price']
+#             discount_price = request.POST['discount_price']
+#             product_availabile_Qty = request.POST['product_availabile_Qty']
+
+#             table = Product.objects.create(
+#                 Category_id = cate,
+#                 org_id = vendor.id,
+#                 user_id = use,
+#                 product_name = product_name,
+#                 product_description = product_description,
+#                 product_qty = product_qty,
+#                 unit_price = unit_price,
+#                 discount_price = discount_price,
+#                 product_availabile_Qty = product_availabile_Qty
+#             )
+#             table.save()
+#             return HttpResponse('Success')
+#     #         else:
+#     #             return HttpResponse("Error")
+#     #     except:
+#     #         return HttpResponse("Session Expired")
+#     # else:
+#     #     return HttpResponse("Error")
