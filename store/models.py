@@ -115,7 +115,7 @@ class OrgProfile(models.Model):
 
 class Product(models.Model):
     id = models.AutoField(primary_key=True, db_column='product_id')
-    org_id = models.ForeignKey(OrgProfile, models.CASCADE, blank=True, null=True,db_column='org_id')
+    user = models.ForeignKey(UserProfile, models.CASCADE, blank=True, null=True,db_column='user_id')
     category = models.ForeignKey(Category, models.CASCADE, blank=True, null=True)
     product_name = models.CharField(max_length=500, blank=True, null=True)
     description = models.TextField(null=True, blank=True)

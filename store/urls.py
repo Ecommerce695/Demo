@@ -1,5 +1,9 @@
 from django.urls import path,include
 from . import views
+from . import vendordetails, superadmin, admindetails
+from store.superadmin import SuperAdminRegisterAPI, SUPERAdminloginAPI
+from store.admindetails import AdminRegisterAPI, AdminloginAPI
+
 
 urlpatterns = [
     # User Module APIs
@@ -62,8 +66,35 @@ urlpatterns = [
     # GET Method
     # path('topproducts/', views.topratedproducts_api, name='topproducts'),
 
-    # POST(Vendor Organization Registration)
-    path('vendor/register/<token>/', views.vendor_register_api, name='vendor_register_form'),
-
     # path('add_products/<token>/', views.vendorproductsadd, name='add products'),
+
+
+
+
+       #######################################   SUPER ADMIN     #################################
+
+   path('superadminregister/', SuperAdminRegisterAPI.as_view(), name='superadminregister'),
+   path('superadminlogin/', SUPERAdminloginAPI.as_view(), name='superadminlogin'),
+   path('superadminorg/<token>/', superadmin.SA_org_register, name='superadminorg'),
+   path('superadminproductsadd/<token>/',superadmin.superadminproductsadd, name='superadminproductsadd'),
+   path('superadminproducts/<token>/',superadmin.superadminproducts, name='superadminproducts'),
+   path('superadminproductsupdate/<token>/<int:pid>/',superadmin.superadminproductsupdate, name='superadminproducts'),
+
+
+#    ######################   ADMIN   #########################################
+
+   path('adminregister/', AdminRegisterAPI.as_view(), name='adminregister'),
+   path('adminlogin/',AdminloginAPI.as_view(), name='adminlogin'),
+   path('adminorg/<token>/',admindetails.Admin_org_register, name='adminorg'),
+   path('adminproductsadd/<token>/',admindetails.adminproductsadd, name='adminproductsadd'),
+   path('adminproducts/<token>/',admindetails.adminproducts, name='adminproducts'),
+   path('adminproductsupdate/<token>/<int:pid>/',admindetails.adminproductsupdate, name='adminproducts'),
+
+
+
+   ############################    VENDOR     #######################################
+
+   path('vendororgregister/<token>/',vendordetails.Vendor_org_register, name='vendororgregister'),
+   path('vendorproductsadd/<token>/',vendordetails.vendorproductsadd, name='vendorproductsadd'),
+   path('vendorproducts/<token>/',vendordetails.vendorproducts, name='vendorproducts'),
 ]

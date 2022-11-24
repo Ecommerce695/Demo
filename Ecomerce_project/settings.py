@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     # App name
     'store',
     # Reset password (pip install django-rest-passwordreset)
-    'django_rest_passwordreset',
+    #'django_rest_passwordreset',
 ]
 
 
@@ -211,7 +211,7 @@ from datetime import timedelta
 REST_KNOX = {
   'SECURE_HASH_ALGORITHM': 'cryptography.hazmat.primitives.hashes.SHA512',
   'AUTH_TOKEN_CHARACTER_LENGTH': 8,
-  'TOKEN_TTL': timedelta(minutes=5),
+  'TOKEN_TTL': timedelta(minutes=10),
   'USER_SERIALIZER': 'knox.serializers.UserSerializer',
   'TOKEN_LIMIT_PER_USER': None,
   'AUTO_REFRESH': False,

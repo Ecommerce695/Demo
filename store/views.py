@@ -44,6 +44,8 @@ def register_api(request):
         }
     )
 
+
+
 # User Login API
 @transaction.atomic
 @api_view(['POST'])
@@ -52,19 +54,37 @@ def login_api(request):
     serializer.is_valid(raise_exception=True)
     user = serializer.validated_data['user']
 
-    _, token = AuthToken.objects.create(user)
+    roles = Role.objects.get(role='USER')
+    roles1 = roles.role_id
+    roless = Role.objects.get(role='VENDOR')
+    roles2 = roless.role_id
+    if user and user.is_active:
+        user1 = user.id
+        try:
+            if(UserRole.objects.filter(user_id=user1).filter(role_id=roles1)):
+                _, token = AuthToken.objects.create(user)
+                return Response({
+                    "Success":"Success",
+                    "Token": token
+                })
+            else:
+                return HttpResponse("Invalid credientials")
+        except:
+            if(UserRole.objects.filter(user_id=user1).filter(role_id=roles2)):
+                _, token = AuthToken.objects.create(user)
+                return Response (
+                    {
+                        "Success":"Success",
+                        "Token":token
+                    })
+            else:
+                return HttpResponse("Invalid credientials")
+    else:
+        return HttpResponse("User not in Active")
 
-    return Response (
-        {
-            'user_info' :{
-                'id' : user.id,
-                'username' : user.username,
-                'email' : user.email,
-                "mobile" : user.mobile_number
-            },
-            'token' : token
-        }
-    )
+
+
+
 
 
 # Logout Request of User
@@ -563,7 +583,7 @@ def category_name_wise_product_filter_api(request, name):
         products = Product.objects.filter(category = categoryid)
         productslist = list(products.values('product_name'))
         return JsonResponse(productslist, safe=False)
-1
+
 
 #####  REVIEW FOR PRODUCT PURCHASED
 from django.db.models import Avg
@@ -604,82 +624,3 @@ def review_api(request,token,pid):
         else:
             return HttpResponse('Error')
     
-
-# ##### GET TOP RATED PRODUCTS
-# @transaction.atomic
-# @api_view(['GET'])
-# def topratedproducts_api(request):
-#     if request.method =='GET':
-#         products = Product.objects.filter(avg_rating__gte = 4).values()
-#         return Response(products)
-
-
-# Vendor Organization Registration Profile
-@transaction.atomic
-@api_view(['POST'])
-def vendor_register_api(request,token):
-    try:
-        u_token = KnoxAuthtoken.objects.get(token_key = token)
-        a = u_token.user_id
-        use = UserProfile.objects.get(id=a)
-        user = use.id
-
-        print(use)
-        print(user)
-    except user.DoesNotExist:
-        return HttpResponse(status=404)
-
-    if u_token.expiry < datetime.now(utc):
-            KnoxAuthtoken.objects.filter(user=user).delete()
-            return HttpResponse("Session Expired, Please login again")
-    else:
-        if request.method =='POST':
-            user = use
-            org_name = request.POST['org_name']
-            email = request.POST['email']
-            mobile = request.POST['mobile']
-            tax_id = request.POST['tax_id']
-            description = request.POST['description']
-            address = request.POST['address']
-            city = request.POST['city']
-            state = request.POST['state']
-            country = request.POST['country']
-            pincode = request.POST['pincode']
-
-            vendor = OrgProfile.objects.create(
-                user = user,
-                org_name = org_name,
-                email = email,
-                mobile = mobile,
-                tax_id = tax_id,
-                description = description,
-                address = address,
-                city = city,
-                state = state,
-                country = country,
-                pincode = pincode
-            )
-            
-            vendor.save()
-            r = Role.objects.get(role='VENDOR')
-            UserRole.objects.create(role_id=r.role_id, user_id= use.id)
-            return Response (
-                {
-                    'org_id' : vendor.id,
-                    'org_name' : vendor.org_name,
-                    'email' : vendor.email,
-                    'description' : vendor.description,
-                    'address' : vendor.address,
-                }
-            )
-        else:
-            return HttpResponse('Method Not Allowed')
-
-
-
-
-
-
-
-def abc(request):
-    pass
