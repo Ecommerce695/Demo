@@ -635,3 +635,6 @@ def abc(request):
 
 def xyz():
     pass
+
+def a ():
+    pass
