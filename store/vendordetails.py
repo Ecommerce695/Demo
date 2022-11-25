@@ -155,3 +155,6 @@ def xyx_akk():
 
 def abc(request):
     pass
+
+def defas(request):
+    pass
