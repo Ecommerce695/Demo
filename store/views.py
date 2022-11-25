@@ -631,5 +631,15 @@ def jgufjtf(request):
 def abc(request):
     pass
 
+<<<<<<< HEAD
 def  b(request):
     pass
+=======
+
+
+def xyz():
+    pass
+
+def a ():
+    pass
+>>>>>>> b427f4a62b6b3c0008e844f6cecadd4345547d23
