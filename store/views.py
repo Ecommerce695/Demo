@@ -628,13 +628,6 @@ def review_api(request,token,pid):
 def jgufjtf(request):
     pass
 
-
-
-
-
-
-
-
-
-def abcdef(request):
+def abc(request):
     pass
+
