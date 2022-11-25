@@ -639,3 +639,6 @@ def xyz():
 
 def a ():
     pass
+
+def q():
+    pass
