@@ -150,7 +150,8 @@ def vendorproducts(request,token):
                 return HttpResponse("Error")
 
 
-
+def xyx_akk():
+    pass
 
 def abc(request):
     pass

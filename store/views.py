@@ -631,8 +631,6 @@ def jgufjtf(request):
 def abc(request):
     pass
 
-
-
 def xyz():
     pass
 
