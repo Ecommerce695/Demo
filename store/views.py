@@ -627,13 +627,6 @@ def review_api(request,token,pid):
 
 
 
-
-
-
-
-
-
-
-
-def abcdef(request):
+def abc(request):
     pass
+
