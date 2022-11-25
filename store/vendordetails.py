@@ -154,3 +154,6 @@ def vendorproducts(request,token):
 
 def abc(request):
     pass
+
+def defas(request):
+    pass
