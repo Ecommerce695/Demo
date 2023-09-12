@@ -48,6 +48,10 @@ class AddProductVariantView(CreateAPIView):
                             variant_images = serializer.validated_data['images']
 
                             product = Product.objects.get(user=userdata, id=pid)
+                            coll = collection.objects.filter(id=pid).values('id','collection_id').earliest('-collection_id')
+                            print(coll['id'])
+                            col = collection.objects.get(id=coll['id'],collection_id=coll['collection_id'])
+                            print(col.id,col.collection,col.collection_id)
                             dis_percentage =variant_discount/100
                             dis_price = variant_price*dis_percentage
                             final_price=(variant_price - dis_price)
@@ -85,13 +89,16 @@ class AddProductVariantView(CreateAPIView):
                                     stock=variant_quantity)
                             
                             for image in variant_images:
-                                print(image)
                                 variant_image = 'http://127.0.0.1:8000/media/variants/images/' + str(image)
                                 i=images.objects.create(id=product.id,alt=variant.color,path=image,src=variant_image,variant_id=variant.variant_id)
 
                             variants.objects.filter(variant_id=i.variant_id).update(image_id=i.image_id)
 
-                            tags.objects.create(id=product.id,tags=variant_color)
+                            col = collection.objects.create(id=product.id,collection=col.collection,variant_id=variant.variant_id)
+                            tags.objects.create(id=product.id,tags=product.brand,variant_id=variant.variant_id)
+                            tags.objects.create(id=product.id,tags=variant_color,variant_id=variant.variant_id)
+                            if product.new ==True:
+                                    tags.objects.create(id=product.id,tags='new',variant_id=variant.variant_id)
 
                             return Response({"message":"Successfully Added New Varinat"}, status=status.HTTP_201_CREATED)
                         else :
@@ -231,8 +238,6 @@ class SuperAdminUpdateVariantsAPI(CreateAPIView):
                             skuval = product.brand.upper()+'-'+variant_color.upper()
                         else:
                             skuval = variant_sku
-                        print(final_price)
-                        print(product.shipping_charges)
                         if product.is_charged==True:
                             variants.objects.filter(id=product.id,variant_id=v.variant_id).update(
                                 price = variant_price,
@@ -255,7 +260,7 @@ class SuperAdminUpdateVariantsAPI(CreateAPIView):
                                 color=variant_color,
                                 quantity = variant_quantity,
                                 stock=variant_quantity)
-                        tags.objects.create(id=product.id,tags=variant_color)
+                        tags.objects.create(id=product.id,tags=variant_color,variant_id=v.variant_id)
                         return Response({'message':'Product updated successfully'},status= status.HTTP_201_CREATED)
             else:
                 data={'message':"Current User is not Super Admin"}

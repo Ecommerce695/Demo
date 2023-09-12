@@ -67,7 +67,6 @@ class CreateShipmentForEachOrder(CreateAPIView):
                                 "hsn": '',
                                 "brand": pro.brand,
                                 "color": variant.color,
-                                "size": variant.size,
                                 "weight": pro.weight,
                                 "dimensions": pro.dimensions,
                                 "category" :pro.category

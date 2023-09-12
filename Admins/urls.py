@@ -1,13 +1,15 @@
 from django.urls import path
 from Admins import views
 from .views import (AdminRegisterView,AdminCompanyRegistrationView,CompanyDetailsUpdateView,EmailUpdateView,MobileUpdateView,TaxIDUpdateView,
-                    AddProductView,AddProductVariant,ProductDetailsUpdate,MobileSpecification,LaptopSpecification,AddCategory,
+                    MobileSpecification,LaptopSpecification,AddCategory,
                     AdminDashboardDetails,ProductRestoreAPI,AdminOrderDetailPageAPI)
 
 from .filters import (GetAdminProductsIncludingFilters,GetAllProductsIncludingFilters,GetAllOrdersListIncludingFilters,GetSalesListIncludingFilters,
                       GetUsersListIncludingFilters,GetVendorsListIncludingFilters,
                       GetMyOrdersListIncludingFilters)
 
+from .products import AdminAddProductsAPI,AdminUpdateProductsAPI
+from .variants import AddProductVariantView,AdminUpdateVariantsAPI
 # from .order_tabs import (GetNewOrdersListIncludingFilters,GetPickedOrdersListIncludingFilters,GetCancelOrdersListIncludingFilters,
 #                      GetInProgressOrdersListIncludingFilters)
 
@@ -38,18 +40,15 @@ urlpatterns = [
     path('adminorgtaxidupdate/<token>',TaxIDUpdateView.as_view(), name='adminorgtaxidupdate'),
 
 #     # Admin Products POST FETCH
-    path('adminproducts/<token>',AddProductView.as_view(), name='admin products'),
+    # path('adminproducts/<token>',AddProductView.as_view(), name='admin products'),
+    # path('a/addvariant/<token>/<int:pid>',AddProductVariant.as_view(),name='adding Variant'),
+    # # Product Details Update and Delete
+    # path('adminproductsupdate/<token>/<int:pid>',ProductDetailsUpdate.as_view(),name='adminproductsupdate'),
+    # # Mobile Specifications [POST, GET, UPDATE, DELETE]
+    # path('admindropdownmobile/<token>/<int:pid>',MobileSpecification.as_view(),name='admindropdownmobile'),
+    # # Laptop Specifications [POST, GET, UPDATE, DELETE]
+    # path('admindropdownlaptop/<token>/<int:pid>',LaptopSpecification.as_view(),name='admindropdownlaptop'),
 
-    path('a/addvariant/<token>/<int:pid>',AddProductVariant.as_view(),name='adding Variant'),
-
-    # Product Details Update and Delete
-    path('adminproductsupdate/<token>/<int:pid>',ProductDetailsUpdate.as_view(),name='adminproductsupdate'),
-
-    # Mobile Specifications [POST, GET, UPDATE, DELETE]
-    path('admindropdownmobile/<token>/<int:pid>',MobileSpecification.as_view(),name='admindropdownmobile'),
-
-    # Laptop Specifications [POST, GET, UPDATE, DELETE]
-    path('admindropdownlaptop/<token>/<int:pid>',LaptopSpecification.as_view(),name='admindropdownlaptop'),
 
     # Admin adding category
     path('admincategory/<token>',AddCategory.as_view(), name='admincategory'),

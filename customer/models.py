@@ -71,6 +71,8 @@ class UserAddress(models.Model):
     country = models.CharField(max_length=100, blank=True, null=True)
     pincode = models.IntegerField(blank=True, null=True,db_column='pincode')
     is_default = models.BooleanField(default=False)
+    is_active=models.BooleanField(default=True)
+    created_at = models.DateTimeField(default=datetime.datetime.now())
 
     class Meta:
         db_table = 'user_address'
@@ -105,6 +107,7 @@ class avg_rating(models.Model):
     id = models.AutoField(primary_key=True)
     product_name = models.CharField(max_length=100)
     rating = models.FloatField(max_length=50)
+    created_at=models.DateField(default=datetime.date.today())
 
     class Meta:
         db_table = 'avg_rating'
@@ -115,16 +118,6 @@ class Wishlist(models.Model):
     user = models.ForeignKey(UserProfile, models.CASCADE, blank=True, null=True, db_column='user_id')
     product = models.ForeignKey('super_admin.Product', on_delete=models.CASCADE,db_column='product_id')
     variant = models.PositiveIntegerField(null=True)
-    title = models.CharField(max_length=1000, null=True)
-    category = models.CharField(max_length=100, null=True)
-    brand = models.CharField(max_length=100, null=True)
-    sku = models.CharField(max_length=1000,null=True)
-    size = models.CharField(max_length=100, null=True)
-    color = models.CharField(max_length=100, null=True)
-    src = models.CharField(max_length=1000, null=True)
-    discount = models.PositiveIntegerField()
-    type = models.CharField(max_length=1000, null=True)
-    price = models.FloatField(blank=True, null=True)
     created_at = models.DateTimeField(default=datetime.datetime.now())
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -389,31 +389,36 @@ class cart_api(CreateAPIView):
                     serializer = self.get_serializer(data=request.data)
                     if serializer.is_valid():
                         seri = serializer.validated_data['id']
-                        if(Cart.objects.filter(user=userdata, product=seri).exists()):
-                            cart = Cart.objects.get(user=userdata, product=seri)
-                            product = Product.objects.get(id=seri)
-                            prices = product.price-(product.price*product.discount/100)
+                        serivariant = serializer.validated_data['variant']
+                        if(Cart.objects.filter(user=userdata, product=seri,variant=serivariant).exists()):
+                            cart = Cart.objects.get(user=userdata, product=seri,variant=serivariant)
+                            product = variants.objects.get(id=seri,variant_id=serivariant)
                             qty = cart.quantity+1
-                            total = prices*qty
-                            Cart.objects.filter(product=seri, user=userdata).update(quantity=qty, 
-                            price=product.price, discount=product.discount,title=product.title,
-                            cart_value=total)
-                            Product.objects.filter(id=seri).update(stock=product.quantity-1)
+                            total = product.selling_price*qty
+                            Cart.objects.filter(product=seri,variant=serivariant, user=userdata).update(
+                                quantity=qty, 
+                                cart_value=total,
+                                updated_at=datetime.now())
+                            variants.objects.filter(id=seri,variant_id=serivariant).update(stock=product.quantity-1)
                             data = {"message":'Added to cart'}
                             return Response(data, status=status.HTTP_200_OK)
                         else:
-                            if(Product.objects.filter(id=seri).exists()):
-                                product = Product.objects.get(id=seri)
-                                productquantity = product.stock
+                            if(variants.objects.filter(id=seri,variant_id=serivariant).exists()):
+                                variant=variants.objects.get(id=seri,variant_id=serivariant)
+                                p= Product.objects.get(id=variant.id)
+                                productquantity = variant.stock
                                 if productquantity==0:
                                     data = {"message":'Out of stock'}
                                     return Response(data, status=status.HTTP_404_NOT_FOUND)
                                 else:
-                                    var = variants.objects.get(id=product.id)
-                                    img = images.objects.get(id=product.id)
-                                    prices = product.price-(product.price*product.discount/100)
-                                    Cart.objects.create(product=product, user=usertable, quantity=1, price=product.price,discount=product.discount, cart_value=prices,title=product.title,variant=var.variant_id, sku=var.sku,size=var.size,color=var.color,src=img.src,brand=product.brand,type=product.type,stock=product.stock)
-                                    Product.objects.filter(id=seri).update(stock=productquantity-1)
+                                    sellingprice = variant.selling_price
+                                    Cart.objects.create(
+                                        product=p,
+                                        user=usertable,
+                                        variant=variant.variant_id,
+                                        quantity=1,
+                                        cart_value=sellingprice)
+                                    variants.objects.filter(id=seri,variant_id=serivariant).update(stock=productquantity-1)
                                     data = {"message":'Added to cart'}
                                     return Response(data, status=status.HTTP_200_OK)
                             else:
@@ -454,18 +459,18 @@ class cart_api(CreateAPIView):
                 else:
                     data = Cart.objects.filter(user=userdata)
                     if data.exists():
-                        product = Cart.objects.filter(user=userdata).values('product')
+                        cart_data = Cart.objects.filter(user=userdata).values()
                         datalist =[] 
-                        for i in product:
-                            pro = Product.objects.get(id = i['product'])
-                            c = Cart.objects.get(user=userdata,product=i["product"])
-                            col = collection.objects.filter(id=i["product"]).values_list('collection',flat=True)
-                            var = variants.objects.filter(id=i["product"]).values()
-                            img = images.objects.filter(id=i["product"]).values()
-                            t = tags.objects.filter(id=i["product"]).values_list('tags',flat=True)
-
+                        for i in cart_data:
+                            v= variants.objects.get(variant_id=i["variant"])
+                            pro = Product.objects.get(id = v.id)
+                            col = collection.objects.filter(id=pro.id).values_list('collection',flat=True)
+                            var = variants.objects.filter(id=pro.id,variant_id=v.variant_id).values()
+                            img = images.objects.filter(id=v.id,variant_id=v.variant_id).values()
+                            t = tags.objects.filter(id=pro.id).values_list('tags',flat=True)
                             company = CompanyProfile.objects.get(user=pro.user)
-                            if (UserAddress.objects.filter(user=userdata).exists()):
+
+                            if (UserAddress.objects.filter(user=userdata,is_default=True).exists()):
                                 user_add = UserAddress.objects.get(user=userdata,is_default=True)
 
                                 url = "https://apiv2.shiprocket.in/v1/external/courier/serviceability/"
@@ -495,27 +500,84 @@ class cart_api(CreateAPIView):
                                         i=i+1
                                         date_list.append(date)
                                         charger_list.append(shipping_chargers)
-                                    data = {
-                                        "id": pro.id,
-                                        "title": pro.title,
-                                        "description": pro.description, 
-                                        "type": pro.type,
-                                        "brand": pro.brand,
-                                        "collection": col,
-                                        "category": pro.category,
-                                        "price": pro.price,
-                                        "sale": pro.sale,
-                                        "discount": pro.discount,
-                                        "quantity": int(c.quantity),
-                                        "new": pro.new,
-                                        "variants" : var,
-                                        "images" : img,
-                                        "tag":t,
-                                        "estimated_delivery_date": max(date_list),
-                                        "shipping_chargers":max(charger_list),
-                                        "is_deleted":pro.is_deleted
-                                    }
-                                    datalist.append(data)
+                                    if pro.is_charged==False:
+                                        data = {
+                                            "id": pro.id,
+                                            "title": pro.title,
+                                            "description": pro.description, 
+                                            "type": pro.type,
+                                            "brand": pro.brand,
+                                            "collection": col,
+                                            "sale": pro.sale,
+                                            "new": pro.new,
+                                            # "user_id": userdata,
+                                            "category_id": pro.category_id,
+                                            "category": pro.category,
+                                            "rating": pro.rating,
+                                            "is_active": pro.is_active,
+                                            "alias": pro.alias,
+                                            "dimensions": pro.dimensions,
+                                            "weight": pro.weight,
+                                            "status": pro.status,
+                                            "is_charged": pro.is_charged,
+                                            # "shipping_charges": pro.shipping_charges,
+                                            # "other_charges": pro.other_charges,
+                                            "is_wattanty": pro.is_wattanty,
+                                            "warranty_months": pro.warranty_months,
+                                            "warranty_src": pro.warranty_src,
+                                            "warranty_path": pro.warranty_path.name,
+                                            "created_at": pro.created_at.date(),
+                                            "updated_at" : pro.updated_at.date(),
+                                            "new": pro.new,
+                                            "tags":t,
+                                            "variants" : var,
+                                            "images" : img,
+                                            "sold_by" : company.org_name,
+                                            "weight": pro.weight,
+                                            "dimensions":pro.dimensions,
+                                            "estimated_delivery_date": max(date_list),
+                                            "shipping_chargers":max(charger_list),
+                                        }
+                                        datalist.append(data)
+                                    elif pro.is_charged==True:
+                                        data = {
+                                            "id": pro.id,
+                                            "title": pro.title,
+                                            "description": pro.description, 
+                                            "type": pro.type,
+                                            "brand": pro.brand,
+                                            "collection": col,
+                                            "sale": pro.sale,
+                                            "new": pro.new,
+                                            # "user_id": userdata,
+                                            "category_id": pro.category_id,
+                                            "category": pro.category,
+                                            "rating": pro.rating,
+                                            "is_active": pro.is_active,
+                                            "alias": pro.alias,
+                                            "dimensions": pro.dimensions,
+                                            "weight": pro.weight,
+                                            "status": pro.status,
+                                            "is_charged": pro.is_charged,
+                                            # "shipping_charges": pro.shipping_charges,
+                                            # "other_charges": pro.other_charges,
+                                            "is_wattanty": pro.is_wattanty,
+                                            "warranty_months": pro.warranty_months,
+                                            "warranty_src": pro.warranty_src,
+                                            "warranty_path": pro.warranty_path.name,
+                                            "created_at": pro.created_at.date(),
+                                            "updated_at" : pro.updated_at.date(),
+                                            "new": pro.new,
+                                            "tags":t,
+                                            "variants" : var,
+                                            "images" : img,
+                                            "sold_by" : company.org_name,
+                                            "weight": pro.weight,
+                                            "dimensions":pro.dimensions,
+                                            "estimated_delivery_date": max(date_list),
+                                            "shipping_chargers":0
+                                        }
+                                        datalist.append(data)
                                 elif data['status_code']!=200:
                                     data = {
                                         "id": pro.id,
@@ -524,18 +586,36 @@ class cart_api(CreateAPIView):
                                         "type": pro.type,
                                         "brand": pro.brand,
                                         "collection": col,
-                                        "category": pro.category,
-                                        "price": pro.price,
                                         "sale": pro.sale,
-                                        "discount": pro.discount,
-                                        "quantity": int(c.quantity),
                                         "new": pro.new,
+                                        # "user_id": userdata,
+                                        "category_id": pro.category_id,
+                                        "category": pro.category,
+                                        "rating": pro.rating,
+                                        "is_active": pro.is_active,
+                                        "alias": pro.alias,
+                                        "dimensions": pro.dimensions,
+                                        "weight": pro.weight,
+                                        "status": pro.status,
+                                        "is_charged": pro.is_charged,
+                                        "shipping_charges": pro.shipping_charges,
+                                        "other_charges": pro.other_charges,
+                                        "is_wattanty": pro.is_wattanty,
+                                        "warranty_months": pro.warranty_months,
+                                        "warranty_src": pro.warranty_src,
+                                        "warranty_path": pro.warranty_path.name,
+                                        "created_at": pro.created_at.date(),
+                                        "updated_at" : pro.updated_at.date(),
+                                        "new": pro.new,
+                                        "tags":t,
                                         "variants" : var,
                                         "images" : img,
-                                        "tag":t,
-                                        "is_deleted":pro.is_deleted
+                                        "sold_by" : company.org_name,
+                                        "weight": pro.weight,
+                                        "dimensions":pro.dimensions,
+                                        # "estimated_delivery_date": max(date_list),
+                                        # "shipping_chargers":max(charger_list),
                                     }
-                                    datalist.append(data)
                             else:
                                 data = {
                                     "id": pro.id,
@@ -544,19 +624,37 @@ class cart_api(CreateAPIView):
                                     "type": pro.type,
                                     "brand": pro.brand,
                                     "collection": col,
-                                    "category": pro.category,
-                                    "price": pro.price,
                                     "sale": pro.sale,
-                                    "discount": pro.discount,
-                                    "quantity": int(c.quantity),
                                     "new": pro.new,
+                                    # "user_id": userdata,
+                                    "category_id": pro.category_id,
+                                    "category": pro.category,
+                                    "rating": pro.rating,
+                                    "is_active": pro.is_active,
+                                    "alias": pro.alias,
+                                    "dimensions": pro.dimensions,
+                                    "weight": pro.weight,
+                                    "status": pro.status,
+                                    "is_charged": pro.is_charged,
+                                    "shipping_charges": pro.shipping_charges,
+                                    "other_charges": pro.other_charges,
+                                    "is_wattanty": pro.is_wattanty,
+                                    "warranty_months": pro.warranty_months,
+                                    "warranty_src": pro.warranty_src,
+                                    "warranty_path": pro.warranty_path.name,
+                                    "created_at": pro.created_at.date(),
+                                    "updated_at" : pro.updated_at.date(),
+                                    "new": pro.new,
+                                    "tags":t,
                                     "variants" : var,
                                     "images" : img,
-                                    "tag":t,
-                                    "is_deleted":pro.is_deleted
+                                    "sold_by" : company.org_name,
+                                    "weight": pro.weight,
+                                    "dimensions":pro.dimensions,
+                                    "estimated_delivery_date": max(date_list),
+                                    "shipping_chargers":max(charger_list),
                                 }
                                 datalist.append(data)
-                            
                         return Response(datalist, status=status.HTTP_200_OK)
                     else:
                         return Response([], status=status.HTTP_204_NO_CONTENT)
@@ -599,55 +697,57 @@ class cart_quantity(CreateAPIView):
                     serializer = self.get_serializer(data = request.data)
                     if serializer.is_valid():
                         seri = serializer.validated_data['id'] 
+                        serivariant = serializer.validated_data['variant'] 
                         qty = serializer.validated_data['quantity'] 
-                        if (Product.objects.filter(id=seri).exists()):
-                            if(Cart.objects.filter(user=userdata, product=seri).exists()):
-                                cart = Cart.objects.get(product=seri, user=userdata)
+                        if (variants.objects.filter(id=seri,variant_id=serivariant).exists()):
+                            if(Cart.objects.filter(user=userdata, product=seri,variant=serivariant).exists()):
+                                cart = Cart.objects.get(product=seri,variant=serivariant,user=userdata)
                                 
-                                if(Product.objects.filter(id=seri).exists()):
-                                    product = Product.objects.get(id=seri)
-                                    prices = product.price-(product.price*product.discount/100)
-                                    productquantity = product.stock
-                                    carttable = Cart.objects.get(product=seri, user=userdata)
-                                    cartquantity = carttable.quantity
-                                    cartprice = carttable.price
-                                    cartvalue = carttable.cart_value
+                                var = variants.objects.get(variant_id=serivariant,id=seri)
+                                # product = Product.objects.get(id=seri)
+                                prices = var.selling_price
+                                productquantity = var.stock
+                                carttable = Cart.objects.get(product=seri, user=userdata,variant=serivariant)
+                                cartquantity = carttable.quantity
+                                cartvalue = carttable.cart_value
                                     
-                                    if qty<0:
-                                        if cartquantity==1:
-                                            Cart.objects.filter(product=seri, user=userdata).delete()
-                                            Product.objects.filter(id=seri).update(stock=productquantity+1)
-                                            data = {"message":'Removed successfully'}  
-                                            return Response(data, status=status.HTTP_200_OK)
-                                        else:
-                                            Cart.objects.filter(product=seri, user=userdata, variant=cart.variant).update(quantity=cartquantity-1, price=cartprice, cart_value=cartvalue-prices, title=product.title)
-                                            Product.objects.filter(id=seri).update(stock=productquantity+(-1))
-                                            data = {"message":'Removed successfully'}  
-                                            return Response(data, status=status.HTTP_200_OK)  
-                                    elif qty>0:
-                                        if product.stock<=0:
-                                            data = {"message":'Out of stock'}
-                                            return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE) 
-                                        else:
-                                            Cart.objects.filter(product=seri, user=userdata, variant=cart.variant).update(quantity=cartquantity+1, price=product.price, cart_value=cart.cart_value+prices, title=product.title)
-                                            Product.objects.filter(id=seri).update(stock=productquantity-1)
-                                            data = {"message":'Added successfully'}
-                                            return Response(data, status=status.HTTP_200_OK)
-                                    elif productquantity==0 :
+                                if qty<0:
+                                    if cartquantity==1:
+                                        Cart.objects.filter(product=seri,variant=serivariant, user=userdata).delete()
+                                        variants.objects.filter(id=seri,variant_id=serivariant).update(stock=productquantity+1)
+                                        data = {"message":'Removed successfully'}  
+                                        return Response(data, status=status.HTTP_200_OK)
+                                    else:
+                                        Cart.objects.filter(product=seri, user=userdata, variant=cart.variant).update(quantity=cartquantity-1, cart_value=cartvalue-prices)
+                                        variants.objects.filter(id=seri,variant_id=serivariant).update(stock=productquantity+(1))
+                                        data = {"message":'Removed successfully'}  
+                                        return Response(data, status=status.HTTP_200_OK)  
+                                elif qty>0:
+                                    if var.stock<=0:
                                         data = {"message":'Out of stock'}
-                                        return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)     
-                                else:
-                                    return Response({"message":"Product not found"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+                                        return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE) 
+                                    else:
+                                        Cart.objects.filter(product=seri, user=userdata, variant=cart.variant).update(quantity=cartquantity+1, cart_value=cart.cart_value+prices)
+                                        variants.objects.filter(id=seri,variant_id=serivariant).update(stock=productquantity-1)
+                                        data = {"message":'Added successfully'}
+                                        return Response(data, status=status.HTTP_200_OK)
+                                elif productquantity==0 :
+                                    data = {"message":'Out of stock'}
+                                    return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)     
                             else:
                                 if(qty<=0):
                                     return Response({"message":"Please add product to cart before decrease quantity"},status=status.HTTP_406_NOT_ACCEPTABLE)
                                 else:
+                                    var = variants.objects.get(id=seri,variant_id=serivariant)
                                     pro =  Product.objects.get(id=seri)
-                                    var = variants.objects.get(id=pro.id)
-                                    img = images.objects.get(id=pro.id)
-                                    prices = pro.price-(pro.price*pro.discount/100)
-                                    Cart.objects.create(product=pro, user=usertable, quantity=1, price=pro.price,discount=pro.discount, cart_value=prices*1,title=pro.title,variant=var.variant_id, sku=var.sku,size=var.size,color=var.color,src=img.src,brand=pro.brand,type=pro.type,stock=pro.stock)
-                                    Product.objects.filter(id=seri).update(stock=pro.stock-1)
+                                    prices = var.selling_price
+                                    Cart.objects.create(
+                                        product=pro, 
+                                        user=usertable, 
+                                        quantity=1, 
+                                        cart_value=prices*1,
+                                        variant=var.variant_id)
+                                    variants.objects.filter(id=seri,variant_id=serivariant).update(stock=var.stock-1)
                                     data = {"message":'Added to cart'}
                                     return Response(data, status=status.HTTP_200_OK)
                         else:
@@ -671,7 +771,7 @@ class cart_quantity(CreateAPIView):
 # class CartDelete():
 @csrf_exempt
 @transaction.atomic
-def cartdelete(request,token,pid):
+def cartdelete(request,token,pid,vid):
         try:
             token1 = KnoxAuthtoken.objects.get(token_key=token)
         except:
@@ -692,13 +792,13 @@ def cartdelete(request,token,pid):
                         data = {"message":'Session Expired, Please login again'}
                         return JsonResponse(data, status=status.HTTP_408_REQUEST_TIMEOUT)
                     else:
-                        if(Cart.objects.filter(user=userdata, product=pid).exists()):
-                            cart1 = Cart.objects.get(user=userdata, product=pid)
+                        if(Cart.objects.filter(user=userdata, product=pid,variant=vid).exists()):
+                            cart1 = Cart.objects.get(user=userdata, product=pid,variant=vid)
                             cartquantity = cart1.quantity
-                            product = Product.objects.get(id=pid)
-                            productquantity = product.stock
-                            Cart.objects.filter(user=userdata, product=pid).delete() 
-                            Product.objects.filter(id=pid).update(stock=productquantity+cartquantity)
+                            var=variants.objects.get(id=pid,variant_id=vid)
+                            productquantity = var.stock
+                            Cart.objects.filter(user=userdata, product=pid,variant=vid).delete() 
+                            variants.objects.filter(id=pid,variant_id=vid).update(stock=productquantity+cartquantity)
                             data = {"message":'Removed successfully'}
                             return JsonResponse(data, status=status.HTTP_200_OK)
                         else:

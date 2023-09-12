@@ -1,8 +1,7 @@
 from rest_framework import serializers, validators
 from rest_framework import serializers
 from customer.models import UserProfile
-from super_admin.models import CompanyProfile,Product,ProductLaptop,ProductMobile,Category
-from django.db.models import Max
+from super_admin.models import CompanyProfile,Product,ProductLaptop,ProductMobile,Category,variants
 
 
 class AdminRegisterSerializer(serializers.ModelSerializer):
@@ -93,30 +92,77 @@ class comapanytaxidserializer(serializers.ModelSerializer):
 
 
 
-class ad_products(serializers.Serializer):
+class ProductSerilaizer(serializers.Serializer):
 
-    category = serializers.CharField()
+    PRODUCT_STATUS_PUBLISH = 'Publish'
+    PRODUCT_STATUS_DRAFT = 'Draft'
+    STATUS_CHOICES =[
+        (PRODUCT_STATUS_PUBLISH,'Publish'),
+        (PRODUCT_STATUS_DRAFT,'Draft')
+    ]
+    
+    PRODUCT_TYPE_GADGET = 'Gadgets'
+    PRODUCT_TYPE_ACCESSORIES = 'Accessories'
+    PRODUCT_TYPE_ELECTRONICS = 'Electronics'
+    TYPE_CHOICES =[
+        (PRODUCT_TYPE_GADGET, 'Gadgets'),
+        (PRODUCT_TYPE_ACCESSORIES, 'Accessories'),
+        (PRODUCT_TYPE_ELECTRONICS, 'Electronics')
+    ]
+
     title = serializers.CharField()
-    description = serializers.CharField(allow_blank=True)
-    type = serializers.CharField()
+    description = serializers.CharField()
+    type = serializers.ChoiceField(choices=TYPE_CHOICES)
     brand = serializers.CharField()
-    price = serializers.FloatField()
     sale = serializers.BooleanField()
+    new = serializers.BooleanField()
+    category = serializers.CharField()
+    dimensions = serializers.CharField()
+    weight = serializers.FloatField()
+    status = serializers.ChoiceField(choices=STATUS_CHOICES)
+    charge_checked = serializers.BooleanField()
+    warranty = serializers.BooleanField()
+    warranty_file= serializers.FileField(default='')
+    warranty_months = serializers.IntegerField(default=0)
+    collection = serializers.CharField()
+    price = serializers.IntegerField()
     discount = serializers.IntegerField(default=0)
     quantity = serializers.IntegerField()
-    new = serializers.BooleanField()
-    collection = serializers.CharField()
-    size = serializers.CharField(default='')
+    sku = serializers.CharField(default='')
     color = serializers.CharField()
-    path = serializers.ImageField()
-    dimensions = serializers.CharField(default='0.5X0.5X0.5')
-    weight = serializers.FloatField(default='0.5')
-
-
-class admin_products_update(serializers.ModelSerializer):
+    variant_images = serializers.ListField()
+    
+  
+class ProductDetailsUpdate(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['category','title','description','price','discount','dimensions','weight']
+        fields =('title','description','type','brand','sale','new','category','dimensions','weight','status','is_wattanty','warranty_path','warranty_months')
+        extra_kwargs = {
+            "warranty_path" : {
+                "required" : False
+            }
+        }
+
+class VariantDetailsUpdate(serializers.ModelSerializer):
+    class Meta:
+        model = variants
+        fields =('price','discount','quantity','sku','color')
+        # extra_kwargs = {
+        #     "warranty_path" : {
+        #         "required" : False
+        #     }
+        # }
+        
+# class VariantDetailUpdate(serializers.Serializer):
+
+
+class product_variant(serializers.Serializer):
+    price = serializers.IntegerField()
+    discount = serializers.IntegerField()
+    quantity = serializers.IntegerField()
+    sku = serializers.CharField(default='')
+    color = serializers.CharField()
+    images = serializers.ListField()
 
 class drop_mobile(serializers.ModelSerializer):
     class Meta:

@@ -1,10 +1,11 @@
 from django.urls import path
 from .views import (VendorRegistration,VendorAccountActivateView,VendorResendActivationView,OrganizationDetailsUpdate,
-                    EmailUpdate,EmailUpdateVerification,MobileUpdate,TaxIDUpdate,VendorProductsView,AddProductVariantView,
-                    ProductDetailsUpdate,MobileSpecificationView,LaptopSpecificationView,colour_api,ven_SearchAPIView,
-                    ven_price,ven_categoryapi,vendorproductsapiget)
+                    EmailUpdate,EmailUpdateVerification,MobileUpdate,TaxIDUpdate,MobileSpecificationView,LaptopSpecificationView,colour_api,ven_SearchAPIView,
+                    ven_price,ven_categoryapi)
 from vendor.ve_filters import GetvendorProductsIncludingFilters,GetMyOrdersListIncludingFilters,GetSalesListIncludingFilters
 from vendor import views
+from .products import VendorUpdateProductsAPI,VendorAddProductsAPI
+from .variants import VendorUpdateVariantsAPI,AddProductVariantView
 
 urlpatterns = [
     #Vendor Registration
@@ -32,21 +33,20 @@ urlpatterns = [
 
     path('vendortaxidupdate/<token>',TaxIDUpdate.as_view(), name='TaxID Update'),
 
-    # Vendor Products Upload
-    path('vendorproducts/<token>',VendorProductsView.as_view(), name='vendorproducts'),
-
-    path('vendorproductsget/<token>',vendorproductsapiget.as_view(), name='vendorproducts get'),
-
-    path('v/addvariant/<token>/<int:pid>',AddProductVariantView.as_view(),name='adding Variant'),
-
-    path('vendorproductsupdate/<token>/<int:pid>',ProductDetailsUpdate.as_view(), name='vendorproductsupdate'),
+    # Vendor Products API
+    path('addproduct/<token>',VendorAddProductsAPI.as_view(),name='Add Product API'),
+    path('product/update/<token>/<pid>',VendorUpdateProductsAPI.as_view(),name=''),
+    
+    # Vendor Variants API
+    path('addvariant/<token>/<pid>',AddProductVariantView.as_view(),name='Add Product Variant API'),
+    path('update/variant/<token>/<pid>/<vid>',VendorUpdateVariantsAPI.as_view(),name='Update Product Variant API'),
 
     # Product Specifications
     path('dropdownmobile/<token>/<int:pid>',MobileSpecificationView.as_view(),name='dropdownmobile'),
 
     path('dropdownlaptop/<token>/<int:pid>',LaptopSpecificationView.as_view(),name='dropdownlaptop'),
 
-#####  Vendor category filters
+    #  Vendor category filters
     path('vencategory/<token>',ven_categoryapi.as_view(),name='vendor category api'),
 
     # path('vendororders/<token>',views.vend_orders,name='vendor products orders'),

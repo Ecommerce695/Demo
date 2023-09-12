@@ -9,8 +9,8 @@ import random,re
 from django.utils.crypto import get_random_string
 from customer.models import UserProfile, UserRole, Role,KnoxAuthtoken,UserAddress
 from .serializers import (AdminRegisterSerializer,Admin_org_serializer,AdminOrgupdate,comapanyemailserializer,
-                          comapanymobileserializer,comapanytaxidserializer,admin_variant,ad_products,
-                          admin_products_update,drop_laptop,drop_mobile,admin_category,DateFilter,ProductNameFilter,
+                          comapanymobileserializer,comapanytaxidserializer,admin_variant,
+                          drop_laptop,drop_mobile,admin_category,DateFilter,ProductNameFilter,
                           ProductPriceFilter,ProductCategoryFilter,ProductColorFilter, ProductAvailabeFilter,
                           ProductTypeFilter, ProductDiscountFilter,OrderIdFilter,OrderPaymentStatusFilter,
                           OrderStatusFilter,SalesDeliveryStatusFilter, SalesInvoiceIDFilter, SalesOrderIDFilter, SalesTxnIDFilter,
@@ -779,354 +779,354 @@ class TaxIDUpdateView(CreateAPIView):
             return Response({"message":"Current User is not Admin"}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 ##################  Admin Products  ###############   
-class AddProductView(CreateAPIView):
-    serializer_class = ad_products
+# class AddProductView(CreateAPIView):
+#     serializer_class = ad_products
 
-    @transaction.atomic
-    def post(self,request,token):
-        try:
-            token1 = KnoxAuthtoken.objects.get(token_key=token)
-        except:
-            data = {
-                    "message" : "Invalid Access Token"
-                }
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
-        user = token1.user_id
-        usertable = UserProfile.objects.get(id=user)
-        userdata = usertable.id
-        role3 = Role.objects.get(role='ADMIN')
-        sarole = role3.role_id
-        roles = UserRole.objects.filter(role_id=sarole).filter(user_id=userdata)
-        if(UserProfile.objects.filter(id=userdata, is_active='True')):
-            if(CompanyProfile.objects.filter(user=userdata,is_active='True')):
-                if roles.exists():
-                    if token1.expiry < datetime.now(utc):
-                        KnoxAuthtoken.objects.filter(user=user).delete()
-                        data = {"message":'Session Expired, Please login again'}
-                        return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
-                    else:
-                        serializer = self.get_serializer(data=request.data)
-                        if serializer.is_valid(raise_exception=True):
-                            procategory = serializer.validated_data['category']
-                            protitle = serializer.validated_data['title']
-                            prodescription = serializer.validated_data['description']
-                            protype = serializer.validated_data['type']
-                            probrand = serializer.validated_data['brand'] 
-                            proquantity = serializer.validated_data['quantity']
-                            proprice = serializer.validated_data['price']
-                            prodiscount = serializer.validated_data['discount']
-                            pronew = serializer.validated_data['new']
-                            prosale =  serializer.validated_data['sale']
-                            procollection = serializer.validated_data['collection']
-                            prosize = serializer.validated_data['size']
-                            procolor = serializer.validated_data['color']
-                            propath = serializer.validated_data['path']
-                            prodimension = serializer.validated_data['dimensions']
-                            proweight = serializer.validated_data['weight']
+#     @transaction.atomic
+#     def post(self,request,token):
+#         try:
+#             token1 = KnoxAuthtoken.objects.get(token_key=token)
+#         except:
+#             data = {
+#                     "message" : "Invalid Access Token"
+#                 }
+#             return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         user = token1.user_id
+#         usertable = UserProfile.objects.get(id=user)
+#         userdata = usertable.id
+#         role3 = Role.objects.get(role='ADMIN')
+#         sarole = role3.role_id
+#         roles = UserRole.objects.filter(role_id=sarole).filter(user_id=userdata)
+#         if(UserProfile.objects.filter(id=userdata, is_active='True')):
+#             if(CompanyProfile.objects.filter(user=userdata,is_active='True')):
+#                 if roles.exists():
+#                     if token1.expiry < datetime.now(utc):
+#                         KnoxAuthtoken.objects.filter(user=user).delete()
+#                         data = {"message":'Session Expired, Please login again'}
+#                         return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
+#                     else:
+#                         serializer = self.get_serializer(data=request.data)
+#                         if serializer.is_valid(raise_exception=True):
+#                             procategory = serializer.validated_data['category']
+#                             protitle = serializer.validated_data['title']
+#                             prodescription = serializer.validated_data['description']
+#                             protype = serializer.validated_data['type']
+#                             probrand = serializer.validated_data['brand'] 
+#                             proquantity = serializer.validated_data['quantity']
+#                             proprice = serializer.validated_data['price']
+#                             prodiscount = serializer.validated_data['discount']
+#                             pronew = serializer.validated_data['new']
+#                             prosale =  serializer.validated_data['sale']
+#                             procollection = serializer.validated_data['collection']
+#                             prosize = serializer.validated_data['size']
+#                             procolor = serializer.validated_data['color']
+#                             propath = serializer.validated_data['path']
+#                             prodimension = serializer.validated_data['dimensions']
+#                             proweight = serializer.validated_data['weight']
                             
-                            if prodimension =='':
-                                return Response({"messgae":"Please use the following format: L X B X H and values should be greater than 0.5 cm"})
-                            strval = 'SKU'+'-'+probrand.upper()+'-'+prosize.upper()+'-'+procolor.upper()
+#                             if prodimension =='':
+#                                 return Response({"messgae":"Please use the following format: L X B X H and values should be greater than 0.5 cm"})
+#                             strval = 'SKU'+'-'+probrand.upper()+'-'+prosize.upper()+'-'+procolor.upper()
 
-                            custom_url = 'http://50.18.24.167/media/product/images/' + str(propath)
+#                             custom_url = 'http://50.18.24.167/media/product/images/' + str(propath)
                             
-                            if(Category.objects.filter(category_name__iexact=procategory)):
-                                tablecategory = Category.objects.get(category_name__iexact=procategory)
-                                if proprice >= prodiscount:
-                                    protable = Product.objects.create(title=protitle,
-                                    description=prodescription, 
-                                    quantity=proquantity, 
-                                    price=round(proprice+proprice*0.18,2),
-                                    discount=prodiscount,
-                                    user=usertable, 
-                                    category_id=tablecategory.id, 
-                                    category = tablecategory.category_name,
-                                    type = protype,
-                                    brand=probrand,
-                                    new=pronew,
-                                    sale=prosale,
-                                    dimensions=prodimension,
-                                    weight=proweight
-                                    )
-                                    ava = protable.stock
-                                    total = ava + proquantity
+#                             if(Category.objects.filter(category_name__iexact=procategory)):
+#                                 tablecategory = Category.objects.get(category_name__iexact=procategory)
+#                                 if proprice >= prodiscount:
+#                                     protable = Product.objects.create(title=protitle,
+#                                     description=prodescription, 
+#                                     quantity=proquantity, 
+#                                     price=round(proprice+proprice*0.18,2),
+#                                     discount=prodiscount,
+#                                     user=usertable, 
+#                                     category_id=tablecategory.id, 
+#                                     category = tablecategory.category_name,
+#                                     type = protype,
+#                                     brand=probrand,
+#                                     new=pronew,
+#                                     sale=prosale,
+#                                     dimensions=prodimension,
+#                                     weight=proweight
+#                                     )
+#                                     ava = protable.stock
+#                                     total = ava + proquantity
 
-                                    cmpny=CompanyProfile.objects.get(user=userdata)
-                                    countrycmpn=cmpny.country
-                                    if countrycmpn=='INDIA':
-                                        stripe.api_key = STRIPE_SECRET_KEY
-                                        stpr=stripe.Product.create(name=protable.title)
-                                        amount = protable.price-(protable.price*protable.discount/100)
-                                        stpric=stripe.Price.create(unit_amount=int(amount*100),currency="inr",product=stpr['id'])
-                                        Product.objects.filter(id = protable.id,category_id=tablecategory.id).update(stock=total,alias='PRO-'+str(protable.id),strproduct=stpr['id'],strprice=stpric['id'])
-                                    elif countrycmpn=='UNITED STATES':
-                                        stripe.api_key = STRIPE_SECRET_US_KEY
-                                        stpr=stripe.Product.create(name=protable.title)
-                                        amount = protable.price-(protable.price*protable.discount/100)
-                                        stpric=stripe.Price.create(unit_amount=int(amount),currency="usd",product=stpr['id'])
-                                        Product.objects.filter(id = protable.id,category_id=tablecategory.id).update(stock=total,alias='PRO-'+str(protable.id),strproduct=stpr['id'],strprice=stpric['id'])
-                                    else:
-                                        return Response({"message":"Country not allowed"},status=status.HTTP_406_NOT_ACCEPTABLE)
+#                                     cmpny=CompanyProfile.objects.get(user=userdata)
+#                                     countrycmpn=cmpny.country
+#                                     if countrycmpn=='INDIA':
+#                                         stripe.api_key = STRIPE_SECRET_KEY
+#                                         stpr=stripe.Product.create(name=protable.title)
+#                                         amount = protable.price-(protable.price*protable.discount/100)
+#                                         stpric=stripe.Price.create(unit_amount=int(amount*100),currency="inr",product=stpr['id'])
+#                                         Product.objects.filter(id = protable.id,category_id=tablecategory.id).update(stock=total,alias='PRO-'+str(protable.id),strproduct=stpr['id'],strprice=stpric['id'])
+#                                     elif countrycmpn=='UNITED STATES':
+#                                         stripe.api_key = STRIPE_SECRET_US_KEY
+#                                         stpr=stripe.Product.create(name=protable.title)
+#                                         amount = protable.price-(protable.price*protable.discount/100)
+#                                         stpric=stripe.Price.create(unit_amount=int(amount),currency="usd",product=stpr['id'])
+#                                         Product.objects.filter(id = protable.id,category_id=tablecategory.id).update(stock=total,alias='PRO-'+str(protable.id),strproduct=stpr['id'],strprice=stpric['id'])
+#                                     else:
+#                                         return Response({"message":"Country not allowed"},status=status.HTTP_406_NOT_ACCEPTABLE)
                                     
-                                    var = variants.objects.create(id=protable.id,sku=strval,size=prosize,color=procolor)
+#                                     var = variants.objects.create(id=protable.id,sku=strval,size=prosize,color=procolor)
                                     
-                                    i=images.objects.create(id=protable.id,alt=var.color,path=propath,src=custom_url,variant_id=var.variant_id)
-                                    variants.objects.filter(variant_id=i.variant_id).update(image_id=i.image_id)
+#                                     i=images.objects.create(id=protable.id,alt=var.color,path=propath,src=custom_url,variant_id=var.variant_id)
+#                                     variants.objects.filter(variant_id=i.variant_id).update(image_id=i.image_id)
                                     
-                                    col = collection.objects.create(id=protable.id,collection=procollection)
+#                                     col = collection.objects.create(id=protable.id,collection=procollection)
 
-                                    tag = tags.objects.create(id=protable.id,tags=probrand)
-                                    tag = tags.objects.create(id=protable.id,tags=prosize)
-                                    tag = tags.objects.create(id=protable.id,tags=procolor)
+#                                     tag = tags.objects.create(id=protable.id,tags=probrand)
+#                                     tag = tags.objects.create(id=protable.id,tags=prosize)
+#                                     tag = tags.objects.create(id=protable.id,tags=procolor)
 
-                                    if pronew ==True:
-                                        tags.objects.create(id=protable.id,tags='new')
+#                                     if pronew ==True:
+#                                         tags.objects.create(id=protable.id,tags='new')
                                     
                                 
 
-                                    data = {"message":'Product Added successfully'}
-                                    return Response(data, status=status.HTTP_200_OK)
-                                else:
-                                    return Response({"message" : "Discount percentage should be inbetween 0 to 100."}, status=status.HTTP_406_NOT_ACCEPTABLE)
-                            else:
-                                data = {'message': "Category Not Found"}
-                                return Response(data, status=status.HTTP_400_BAD_REQUEST)
-                        else:
-                            data = {'message': "Details Not Found"}
-                            return Response(data, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    data={'message' : "Current User is not Admin"}
-                    return Response(data, status=status.HTTP_404_NOT_FOUND)
-            else:
-                data = {"message":'Please activate the company profile to add the product'}
-                return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
-        else:
-            data = {"message":'User is in In-Active, please Activate your account'}
-            return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
+#                                     data = {"message":'Product Added successfully'}
+#                                     return Response(data, status=status.HTTP_200_OK)
+#                                 else:
+#                                     return Response({"message" : "Discount percentage should be inbetween 0 to 100."}, status=status.HTTP_406_NOT_ACCEPTABLE)
+#                             else:
+#                                 data = {'message': "Category Not Found"}
+#                                 return Response(data, status=status.HTTP_400_BAD_REQUEST)
+#                         else:
+#                             data = {'message': "Details Not Found"}
+#                             return Response(data, status=status.HTTP_400_BAD_REQUEST)
+#                 else:
+#                     data={'message' : "Current User is not Admin"}
+#                     return Response(data, status=status.HTTP_404_NOT_FOUND)
+#             else:
+#                 data = {"message":'Please activate the company profile to add the product'}
+#                 return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
+#         else:
+#             data = {"message":'User is in In-Active, please Activate your account'}
+#             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
-    @transaction.atomic
-    def get(self,request,token):
-        try:
-            token1 = KnoxAuthtoken.objects.get(token_key=token)
-        except:
-            data = {
-                    "message" : "Invalid Access Token"
-                }
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
-        user = token1.user_id
-        usertable = UserProfile.objects.get(id=user)
-        userdata = usertable.id
-        role3 = Role.objects.get(role='ADMIN')
-        sarole = role3.role_id
-        roles = UserRole.objects.filter(role_id=sarole).filter(user_id=userdata)
-        if(UserProfile.objects.filter(id=userdata, is_active='True')):
-            if roles.exists():
-                if token1.expiry < datetime.now(utc):
-                    KnoxAuthtoken.objects.filter(user=user).delete()
-                    data = {"message":'Session Expired, Please login again'}
-                    return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
-                else:
-                    table = Product.objects.filter(user=userdata)
-                    if table.exists():
-                        prodata = table.values('id')
-                        datalist =[] 
+#     @transaction.atomic
+#     def get(self,request,token):
+#         try:
+#             token1 = KnoxAuthtoken.objects.get(token_key=token)
+#         except:
+#             data = {
+#                     "message" : "Invalid Access Token"
+#                 }
+#             return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         user = token1.user_id
+#         usertable = UserProfile.objects.get(id=user)
+#         userdata = usertable.id
+#         role3 = Role.objects.get(role='ADMIN')
+#         sarole = role3.role_id
+#         roles = UserRole.objects.filter(role_id=sarole).filter(user_id=userdata)
+#         if(UserProfile.objects.filter(id=userdata, is_active='True')):
+#             if roles.exists():
+#                 if token1.expiry < datetime.now(utc):
+#                     KnoxAuthtoken.objects.filter(user=user).delete()
+#                     data = {"message":'Session Expired, Please login again'}
+#                     return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
+#                 else:
+#                     table = Product.objects.filter(user=userdata)
+#                     if table.exists():
+#                         prodata = table.values('id')
+#                         datalist =[] 
 
-                        for i in prodata:
-                            pro = Product.objects.get(id = i['id'])
-                            col = collection.objects.filter(id=i['id']).values_list('collection',flat=True)
-                            var = variants.objects.filter(id=i['id']).values()
-                            img = images.objects.filter(id=i['id']).values()
-                            t = tags.objects.filter(id=i['id']).values_list('tags',flat=True)
-                            vendor = CompanyProfile.objects.get(user=pro.user)
+#                         for i in prodata:
+#                             pro = Product.objects.get(id = i['id'])
+#                             col = collection.objects.filter(id=i['id']).values_list('collection',flat=True)
+#                             var = variants.objects.filter(id=i['id']).values()
+#                             img = images.objects.filter(id=i['id']).values()
+#                             t = tags.objects.filter(id=i['id']).values_list('tags',flat=True)
+#                             vendor = CompanyProfile.objects.get(user=pro.user)
 
-                            data = {
-                                "id": pro.id,
-                                "title": pro.title,
-                                "description": pro.description, 
-                                "type": pro.type,
-                                "brand": pro.brand,
-                                "collection": col,
-                                "category": pro.category,
-                                "price": pro.price,
-                                "sale": pro.sale,
-                                "discount": pro.discount,
-                                "stock": pro.stock,
-                                "new": pro.new,
-                                "tags":t,
-                                "variants" : var,
-                                "images" : img,
-                                "sold_by" : vendor.org_name,
-                                "weight": pro.weight,
-                                "dimensions":pro.dimensions
-                            }
-                            datalist.append(data)
-                        return Response(datalist, status=status.HTTP_200_OK)
-                    else:
-                        data = {"message":'Details Not Found'}
-                        return Response(data, status=status.HTTP_404_NOT_FOUND)
-            else:
-                data={'message':"Current User is not Admin"}
-                return Response(data, status=status.HTTP_404_NOT_FOUND)
-        else:
-            data = {"message":'User is in In-Active, please Activate your account'}
-            return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
+#                             data = {
+#                                 "id": pro.id,
+#                                 "title": pro.title,
+#                                 "description": pro.description, 
+#                                 "type": pro.type,
+#                                 "brand": pro.brand,
+#                                 "collection": col,
+#                                 "category": pro.category,
+#                                 "price": pro.price,
+#                                 "sale": pro.sale,
+#                                 "discount": pro.discount,
+#                                 "stock": pro.stock,
+#                                 "new": pro.new,
+#                                 "tags":t,
+#                                 "variants" : var,
+#                                 "images" : img,
+#                                 "sold_by" : vendor.org_name,
+#                                 "weight": pro.weight,
+#                                 "dimensions":pro.dimensions
+#                             }
+#                             datalist.append(data)
+#                         return Response(datalist, status=status.HTTP_200_OK)
+#                     else:
+#                         data = {"message":'Details Not Found'}
+#                         return Response(data, status=status.HTTP_404_NOT_FOUND)
+#             else:
+#                 data={'message':"Current User is not Admin"}
+#                 return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         else:
+#             data = {"message":'User is in In-Active, please Activate your account'}
+#             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
-class AddProductVariant(CreateAPIView):
-    serializer_class = admin_variant
+# class AddProductVariant(CreateAPIView):
+#     serializer_class = admin_variant
 
-    @transaction.atomic
-    def post(self,request,token,pid):
-        try:
-            token1 = KnoxAuthtoken.objects.get(token_key=token)
-        except:
-            data = {
-                    "message" : "Invalid Access Token"
-                }
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
-        user = token1.user_id
-        usertable = UserProfile.objects.get(id=user)
-        userdata = usertable.id
-        role3 = Role.objects.get(role='ADMIN')
-        sarole = role3.role_id
-        roles = UserRole.objects.filter(role_id=sarole).filter(user_id=userdata)
-        if(UserProfile.objects.filter(id=userdata, is_active='True')):
-            if roles.exists():
-                if token1.expiry < datetime.now(utc):
-                    KnoxAuthtoken.objects.filter(user=user).delete()
-                    data = {"message":'Session Expired, Please login again'}
-                    return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
-                else:
-                    if(Product.objects.filter(user=userdata, id=pid)):
-                        serializer = self.get_serializer(data=request.data)
-                        if serializer.is_valid(raise_exception=True):
-                            procollection = serializer.validated_data['collection']
-                            prosize = serializer.validated_data['size']
-                            procolor = serializer.validated_data['color']
-                            propath = serializer.validated_data['path']
-                            val = random.randint(1000,9999)
-                            strval = 'SKU'+str(val)
+#     @transaction.atomic
+#     def post(self,request,token,pid):
+#         try:
+#             token1 = KnoxAuthtoken.objects.get(token_key=token)
+#         except:
+#             data = {
+#                     "message" : "Invalid Access Token"
+#                 }
+#             return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         user = token1.user_id
+#         usertable = UserProfile.objects.get(id=user)
+#         userdata = usertable.id
+#         role3 = Role.objects.get(role='ADMIN')
+#         sarole = role3.role_id
+#         roles = UserRole.objects.filter(role_id=sarole).filter(user_id=userdata)
+#         if(UserProfile.objects.filter(id=userdata, is_active='True')):
+#             if roles.exists():
+#                 if token1.expiry < datetime.now(utc):
+#                     KnoxAuthtoken.objects.filter(user=user).delete()
+#                     data = {"message":'Session Expired, Please login again'}
+#                     return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
+#                 else:
+#                     if(Product.objects.filter(user=userdata, id=pid)):
+#                         serializer = self.get_serializer(data=request.data)
+#                         if serializer.is_valid(raise_exception=True):
+#                             procollection = serializer.validated_data['collection']
+#                             prosize = serializer.validated_data['size']
+#                             procolor = serializer.validated_data['color']
+#                             propath = serializer.validated_data['path']
+#                             val = random.randint(1000,9999)
+#                             strval = 'SKU'+str(val)
 
-                            custom_url = 'http://50.18.24.167/media/product/images/' + str(propath)
-                            pro = Product.objects.get(id=pid)
-                            var = variants.objects.create(id=pro.id,sku=strval,size=prosize,color=procolor)
+#                             custom_url = 'http://50.18.24.167/media/product/images/' + str(propath)
+#                             pro = Product.objects.get(id=pid)
+#                             var = variants.objects.create(id=pro.id,sku=strval,size=prosize,color=procolor)
                             
-                            i=images.objects.create(id=pro.id,alt=var.color,path=propath,src=custom_url,variant_id=var.variant_id)
-                            variants.objects.filter(variant_id=i.variant_id).update(image_id=i.image_id)
+#                             i=images.objects.create(id=pro.id,alt=var.color,path=propath,src=custom_url,variant_id=var.variant_id)
+#                             variants.objects.filter(variant_id=i.variant_id).update(image_id=i.image_id)
                             
-                            col = collection.objects.create(id=pro.id,collection=procollection)
+#                             col = collection.objects.create(id=pro.id,collection=procollection)
 
-                            tag = tags.objects.create(id=pro.id,tags=prosize)
-                            tag = tags.objects.create(id=pro.id,tags=procolor)
+#                             tag = tags.objects.create(id=pro.id,tags=prosize)
+#                             tag = tags.objects.create(id=pro.id,tags=procolor)
 
-                            return Response({"message":"Successfully Added New Varinat"}, status=status.HTTP_201_CREATED)
-                        else :
-                            return Response({"message":"Missing value"},status=status.HTTP_204_NO_CONTENT)
-                    else:
-                        return Response({"message":"This Product Does not exists"},status=status.HTTP_404_NOT_FOUND)     
-
-
-class ProductDetailsUpdate(CreateAPIView):
-    serializer_class = admin_products_update
-
-    @transaction.atomic
-    def put(self,request,token,pid):
-        try:
-            token1 = KnoxAuthtoken.objects.get(token_key=token)
-        except:
-            data = {
-                    "message" : "Invalid Token"
-                }
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
-        user = token1.user_id
-        usertable = UserProfile.objects.get(id=user)
-        userdata = usertable.id
-        role3 = Role.objects.get(role='ADMIN')
-        sarole = role3.role_id
-        roles = UserRole.objects.filter(role_id=sarole).filter(user_id=userdata)
-        if(UserProfile.objects.filter(id=userdata, is_active='True')):
-            if roles.exists():
-                if token1.expiry < datetime.now(utc):
-                    KnoxAuthtoken.objects.filter(user=user).delete()
-                    data = {"message":'Session Expired, Please login again'}
-                    return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
-                else:
-                    if(Product.objects.filter(user=userdata, id=pid)):
-                        serializer = self.get_serializer(usertable, data=request.data)
-                        if serializer.is_valid(raise_exception=True):
-                            user = serializer.save()
-                            category = serializer.data['category']
-                            productname = serializer.data['title']
-                            description = serializer.data['description']
-                            unitprice = serializer.data['price']
-                            discount = serializer.data['discount']
-                            dimension = serializer.data['dimensions']
-                            weight = serializer.data['weight']
-
-                            if(Category.objects.filter(category_name__iexact=category)):
-                                cat = Category.objects.get(category_name__iexact=category)
-                                if unitprice >= discount:
-                                    Product.objects.filter(id=pid, user=userdata).update(
-                                        category = cat.id, title=productname, description=description,
-                                        price=round(unitprice,2), dis_price=discount,dimensions=dimension,weight=weight)
-                                    data = {"message":'Product Details Updated successfully'}
-                                    return Response(data, status=status.HTTP_200_OK)
-                                else:
-                                    return Response({"message" : "Discount Price should be greater than Unit Price"}, status=status.HTTP_406_NOT_ACCEPTABLE)
-                            else:
-                                data = {'message': "Category Not Found"}
-                                return Response(data, status=status.HTTP_400_BAD_REQUEST)
-                        else:
-                            data = {'message' :"Incorrect Input Fields" }
-                            return Response(data, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        data = {'message' : "Details Not Found"}
-                        return Response(data, status=status.HTTP_404_NOT_FOUND)
-            else:
-                data={'message' : "Current User is not Admin"}
-                return Response(data, status=status.HTTP_404_NOT_FOUND)
-        else:
-            data = {"message":'User is in In-Active, please Activate your account'}
-            return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
+#                             return Response({"message":"Successfully Added New Varinat"}, status=status.HTTP_201_CREATED)
+#                         else :
+#                             return Response({"message":"Missing value"},status=status.HTTP_204_NO_CONTENT)
+#                     else:
+#                         return Response({"message":"This Product Does not exists"},status=status.HTTP_404_NOT_FOUND)     
 
 
-    @transaction.atomic
-    def delete(self,request,token,pid):
-        try:
-            token1 = KnoxAuthtoken.objects.get(token_key=token)
-        except:
-            data = {
-                    "message" : "Invalid Token"
-                }
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
-        user = token1.user_id
-        usertable = UserProfile.objects.get(id=user)
-        userdata = usertable.id
-        role3 = Role.objects.get(role='ADMIN')
-        sarole = role3.role_id
-        roles = UserRole.objects.filter(role_id=sarole).filter(user_id=userdata)
-        if(UserProfile.objects.filter(id=userdata, is_active='True')):
-            if roles.exists():
-                if token1.expiry < datetime.now(utc):
-                    KnoxAuthtoken.objects.filter(user=user).delete()
-                    data = {"message":'Session Expired, Please login again'}
-                    return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
-                else:
-                    table = Product.objects.filter(user=userdata, id=pid)
-                    if table.exists():
-                        Product.objects.filter(user=userdata, id=pid).update(is_deleted=True)
-                        data = {"message":'Product Removed Successfully'}
-                        return Response(data, status=status.HTTP_200_OK)
-                    else:
-                        data = {'message' : "Details Not Found"}
-                        return Response(data, status=status.HTTP_404_NOT_FOUND)
-            else:
-                data = {'message' : "Current User is not Admin"}
-                return Response(data, status=status.HTTP_404_NOT_FOUND)
-        else:
-            data = {"message":'User is in In-Active, please Activate your account'}
-            return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
+# class ProductDetailsUpdate(CreateAPIView):
+#     serializer_class = admin_products_update
+
+#     @transaction.atomic
+#     def put(self,request,token,pid):
+#         try:
+#             token1 = KnoxAuthtoken.objects.get(token_key=token)
+#         except:
+#             data = {
+#                     "message" : "Invalid Token"
+#                 }
+#             return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         user = token1.user_id
+#         usertable = UserProfile.objects.get(id=user)
+#         userdata = usertable.id
+#         role3 = Role.objects.get(role='ADMIN')
+#         sarole = role3.role_id
+#         roles = UserRole.objects.filter(role_id=sarole).filter(user_id=userdata)
+#         if(UserProfile.objects.filter(id=userdata, is_active='True')):
+#             if roles.exists():
+#                 if token1.expiry < datetime.now(utc):
+#                     KnoxAuthtoken.objects.filter(user=user).delete()
+#                     data = {"message":'Session Expired, Please login again'}
+#                     return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
+#                 else:
+#                     if(Product.objects.filter(user=userdata, id=pid)):
+#                         serializer = self.get_serializer(usertable, data=request.data)
+#                         if serializer.is_valid(raise_exception=True):
+#                             user = serializer.save()
+#                             category = serializer.data['category']
+#                             productname = serializer.data['title']
+#                             description = serializer.data['description']
+#                             unitprice = serializer.data['price']
+#                             discount = serializer.data['discount']
+#                             dimension = serializer.data['dimensions']
+#                             weight = serializer.data['weight']
+
+#                             if(Category.objects.filter(category_name__iexact=category)):
+#                                 cat = Category.objects.get(category_name__iexact=category)
+#                                 if unitprice >= discount:
+#                                     Product.objects.filter(id=pid, user=userdata).update(
+#                                         category = cat.id, title=productname, description=description,
+#                                         price=round(unitprice,2), dis_price=discount,dimensions=dimension,weight=weight)
+#                                     data = {"message":'Product Details Updated successfully'}
+#                                     return Response(data, status=status.HTTP_200_OK)
+#                                 else:
+#                                     return Response({"message" : "Discount Price should be greater than Unit Price"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+#                             else:
+#                                 data = {'message': "Category Not Found"}
+#                                 return Response(data, status=status.HTTP_400_BAD_REQUEST)
+#                         else:
+#                             data = {'message' :"Incorrect Input Fields" }
+#                             return Response(data, status=status.HTTP_400_BAD_REQUEST)
+#                     else:
+#                         data = {'message' : "Details Not Found"}
+#                         return Response(data, status=status.HTTP_404_NOT_FOUND)
+#             else:
+#                 data={'message' : "Current User is not Admin"}
+#                 return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         else:
+#             data = {"message":'User is in In-Active, please Activate your account'}
+#             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+
+#     @transaction.atomic
+#     def delete(self,request,token,pid):
+#         try:
+#             token1 = KnoxAuthtoken.objects.get(token_key=token)
+#         except:
+#             data = {
+#                     "message" : "Invalid Token"
+#                 }
+#             return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         user = token1.user_id
+#         usertable = UserProfile.objects.get(id=user)
+#         userdata = usertable.id
+#         role3 = Role.objects.get(role='ADMIN')
+#         sarole = role3.role_id
+#         roles = UserRole.objects.filter(role_id=sarole).filter(user_id=userdata)
+#         if(UserProfile.objects.filter(id=userdata, is_active='True')):
+#             if roles.exists():
+#                 if token1.expiry < datetime.now(utc):
+#                     KnoxAuthtoken.objects.filter(user=user).delete()
+#                     data = {"message":'Session Expired, Please login again'}
+#                     return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
+#                 else:
+#                     table = Product.objects.filter(user=userdata, id=pid)
+#                     if table.exists():
+#                         Product.objects.filter(user=userdata, id=pid).update(is_deleted=True)
+#                         data = {"message":'Product Removed Successfully'}
+#                         return Response(data, status=status.HTTP_200_OK)
+#                     else:
+#                         data = {'message' : "Details Not Found"}
+#                         return Response(data, status=status.HTTP_404_NOT_FOUND)
+#             else:
+#                 data = {'message' : "Current User is not Admin"}
+#                 return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         else:
+#             data = {"message":'User is in In-Active, please Activate your account'}
+#             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 ############  Drop down apis for product_category  #########
 
@@ -1570,7 +1570,7 @@ class AddCategory(CreateAPIView):
                         if(Category.objects.filter(category_name__iexact=serializerdata).exists()):
                             return Response({"Category Exists"}, status=status.HTTP_406_NOT_ACCEPTABLE)
                         else:
-                            Category.objects.create(category_name=serializerdata.capitalize())
+                            Category.objects.create(category_name=serializerdata.upper())
                             return Response({"Category created successfully, please add specifications"},status=status.HTTP_200_OK)
                     else:
                         return Response({"Seralizer is not valid"}, status=status.HTTP_400_BAD_REQUEST)

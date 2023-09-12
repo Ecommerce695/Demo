@@ -11,8 +11,8 @@ from django.core.mail import send_mail
 from django.contrib.sites.shortcuts import get_current_site 
 from vendor.serializers import (VendorOrgRegistration,vendorActivateAccountSerializer,vendorResetActivationSerializer,
                           VendorOrgupdate,vecomapanyemailserializer,vecomapanymobileserializer,vecomapanytaxidserializer,
-                          vendor_products,product_variant,vendor_products_update,MobileSpecification,LaptopSpecification,
-                          seri_colour,ven_search,price_seri,CategoryBasedProductPagination,vend_products)
+                          MobileSpecification,LaptopSpecification,
+                          seri_colour,ven_search,price_seri,CategoryBasedProductPagination)
 from customer.models import KnoxAuthtoken,UserProfile,Role,UserRole
 from super_admin.models import CompanyProfile,Category,Product,variants,images,collection,tags,ProductLaptop,ProductMobile
 from .models import Vendor_Account_Activation
@@ -103,82 +103,82 @@ class VendorRegistration(CreateAPIView):
                             to_email = [dataemail]
                             send_mail(subject, message, from_email, to_email)
                             Vendor_Account_Activation.objects.create(user = userdata, key = unique_id, otp=Gotp)
-                            if(orgcountry=='india' or orgcountry=='India' or orgcountry=='IN' or orgcountry=='INDIA' or orgcountry=='in'): 
-                                url = "https://apiv2.shiprocket.in/v1/external/settings/company/addpickup"
-                                payload = json.dumps({
-                                "pickup_location": orgdata,
-                                "name": orgdata,
-                                "email": dataemail,
-                                "phone": datamobile,
-                                "address": orgaddress,
-                                "address_2": "",
-                                "city": orgcity,
-                                "state": orgstate,
-                                "country": 'INDIA',
-                                "pin_code": orgpincode,
-                                "gstin" : taxdata.upper()
-                                })
-                                headers = {
-                                'Content-Type': 'application/json',
-                                'Authorization': SHIPMENT_TOKEN
-                                }
-                                response = requests.request("POST", url, headers=headers, data=payload)
-                                if response.status_code==200:
-                                    serializer.save()
-                                    role = Role.objects.get(role='VENDOR')
-                                    r_id = role.role_id
-                                    UserRole.objects.create(role_id = r_id, user_id = userdata)
+                            # if(orgcountry=='india' or orgcountry=='India' or orgcountry=='IN' or orgcountry=='INDIA' or orgcountry=='in'): 
+                            #     url = "https://apiv2.shiprocket.in/v1/external/settings/company/addpickup"
+                            #     payload = json.dumps({
+                            #     "pickup_location": orgdata,
+                            #     "name": orgdata,
+                            #     "email": dataemail,
+                            #     "phone": datamobile,
+                            #     "address": orgaddress,
+                            #     "address_2": "",
+                            #     "city": orgcity,
+                            #     "state": orgstate,
+                            #     "country": 'INDIA',
+                            #     "pin_code": orgpincode,
+                            #     "gstin" : taxdata.upper()
+                            #     })
+                            #     headers = {
+                            #     'Content-Type': 'application/json',
+                            #     'Authorization': SHIPMENT_TOKEN
+                            #     }
+                            #     response = requests.request("POST", url, headers=headers, data=payload)
+                            #     if response.status_code==200:
+                            #         serializer.save()
+                            #         role = Role.objects.get(role='VENDOR')
+                            #         r_id = role.role_id
+                            #         UserRole.objects.create(role_id = r_id, user_id = userdata)
                                     
-                                    CompanyProfile.objects.filter(email=dataemail, mobile=datamobile, 
-                                    org_name=orgdata).update(user=usertable,tax_id=taxdata.upper(),country='INDIA')
+                            #         CompanyProfile.objects.filter(email=dataemail, mobile=datamobile, 
+                            #         org_name=orgdata).update(user=usertable,tax_id=taxdata.upper(),country='INDIA')
                                     
-                                    data = {
-                                        "message" : "Vendor Account activate mail sent to {}, Please activate account".format(dataemail), 
-                                        "id": unique_id,
-                                        "Shiprocket":response.text
-                                    }
-                                    return Response(data, status=status.HTTP_200_OK)
-                                else:
-                                    return Response(response.json(),status=status.HTTP_401_UNAUTHORIZED)  
-                            elif(orgcountry=='UNITED STATES' or orgcountry=='US' or orgcountry=='United States' or orgcountry=='united states' or orgcountry=='us'):
-                                url = "https://apiv2.shiprocket.in/v1/external/settings/company/addpickup"
-                                payload = json.dumps({
-                                "pickup_location": orgdata,
-                                "name": orgdata,
-                                "email": dataemail,
-                                "phone": datamobile,
-                                "address": orgaddress,
-                                "address_2": "",
-                                "city": orgcity,
-                                "state": orgstate,
-                                "country": 'UNITED STATES',
-                                "pin_code": orgpincode,
-                                "gstin" : taxdata.upper()
-                                })
-                                headers = {
-                                'Content-Type': 'application/json',
-                                'Authorization': SHIPMENT_TOKEN
-                                }
-                                response = requests.request("POST", url, headers=headers, data=payload)
-                                if response.status_code==200:
-                                    serializer.save()
-                                    role = Role.objects.get(role='VENDOR')
-                                    r_id = role.role_id
-                                    UserRole.objects.create(role_id = r_id, user_id = userdata)
+                            #         data = {
+                            #             "message" : "Vendor Account activate mail sent to {}, Please activate account".format(dataemail), 
+                            #             "id": unique_id,
+                            #             "Shiprocket":response.text
+                            #         }
+                            #         return Response(data, status=status.HTTP_200_OK)
+                            #     else:
+                            #         return Response(response.json(),status=status.HTTP_401_UNAUTHORIZED)  
+                            # elif(orgcountry=='UNITED STATES' or orgcountry=='US' or orgcountry=='United States' or orgcountry=='united states' or orgcountry=='us'):
+                            #     url = "https://apiv2.shiprocket.in/v1/external/settings/company/addpickup"
+                            #     payload = json.dumps({
+                            #     "pickup_location": orgdata,
+                            #     "name": orgdata,
+                            #     "email": dataemail,
+                            #     "phone": datamobile,
+                            #     "address": orgaddress,
+                            #     "address_2": "",
+                            #     "city": orgcity,
+                            #     "state": orgstate,
+                            #     "country": 'UNITED STATES',
+                            #     "pin_code": orgpincode,
+                            #     "gstin" : taxdata.upper()
+                            #     })
+                            #     headers = {
+                            #     'Content-Type': 'application/json',
+                            #     'Authorization': SHIPMENT_TOKEN
+                            #     }
+                            #     response = requests.request("POST", url, headers=headers, data=payload)
+                            #     if response.status_code==200:
+                            #         serializer.save()
+                            #         role = Role.objects.get(role='VENDOR')
+                            #         r_id = role.role_id
+                            #         UserRole.objects.create(role_id = r_id, user_id = userdata)
                                     
-                                    CompanyProfile.objects.filter(email=dataemail, mobile=datamobile, 
-                                    org_name=orgdata).update(user=usertable,tax_id=taxdata.upper(),country='UNITED STATES')
+                            #         CompanyProfile.objects.filter(email=dataemail, mobile=datamobile, 
+                            #         org_name=orgdata).update(user=usertable,tax_id=taxdata.upper(),country='UNITED STATES')
                                     
-                                    data = {
-                                        "message" : "Vendor Account activate mail sent to {}, Please activate account".format(dataemail), 
-                                        "id": unique_id,
-                                        "Shiprocket":response.text
-                                    }
-                                    return Response(data, status=status.HTTP_200_OK)
-                                else:
-                                    return Response(response.json(),status=status.HTTP_401_UNAUTHORIZED)
-                            else:
-                                return Response({"message":"INDIA and UNITED STATES are only allowed"},status=status.HTTP_406_NOT_ACCEPTABLE)
+                            #         data = {
+                            #             "message" : "Vendor Account activate mail sent to {}, Please activate account".format(dataemail), 
+                            #             "id": unique_id,
+                            #             "Shiprocket":response.text
+                            #         }
+                            #         return Response(data, status=status.HTTP_200_OK)
+                            #     else:
+                            #         return Response(response.json(),status=status.HTTP_401_UNAUTHORIZED)
+                            # else:
+                            #     return Response({"message":"INDIA and UNITED STATES are only allowed"},status=status.HTTP_406_NOT_ACCEPTABLE)
                         except:
                             return Response({"message":"SMTP mail error"},status=status.HTTP_400_BAD_REQUEST)
                     else:
@@ -941,386 +941,386 @@ class TaxIDUpdate(CreateAPIView):
 
 
 
-class VendorProductsView(CreateAPIView):
-    serializer_class = vendor_products
+# class VendorProductsView(CreateAPIView):
+#     serializer_class = vendor_products
 
-    @transaction.atomic
-    def post(self,request,token):
-        try:
-            token1 = KnoxAuthtoken.objects.get(token_key=token)
-        except:
-            data = {
-                    "message" : "Invalid Access Token"
-                }
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
-        user = token1.user_id
-        usertable = UserProfile.objects.get(id=user)
-        userdata = usertable.id
-        role3 = Role.objects.get(role='VENDOR')
-        venrole = role3.role_id
-        roles = UserRole.objects.filter(role_id=venrole).filter(user_id=userdata)
-        if(CompanyProfile.objects.filter(user=userdata, is_active='True')):
-            if roles.exists():
-                if token1.expiry < datetime.now(utc):
-                    KnoxAuthtoken.objects.filter(user=user).delete()
-                    data = {"message":'Session Expired, Please login again'}
-                    return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
-                else:
-                    serializer = self.get_serializer(data=request.data)
-                    if serializer.is_valid(raise_exception=True):
-                        procategory = serializer.validated_data['category']
-                        protitle = serializer.validated_data['title']
-                        prodescription = serializer.validated_data['description']
-                        protype = serializer.validated_data['type']
-                        probrand = serializer.validated_data['brand'] 
-                        proquantity = serializer.validated_data['quantity']
-                        proprice = serializer.validated_data['price']
-                        prodiscount = serializer.validated_data['discount']
-                        pronew = serializer.validated_data['new']
-                        prosale =  serializer.validated_data['sale']
-                        procollection = serializer.validated_data['collection']
-                        prosize = serializer.validated_data['size']
-                        procolor = serializer.validated_data['color']
-                        propath = serializer.validated_data['path']
-                        prodimension = serializer.validated_data['dimensions']
-                        proweight = serializer.validated_data['weight']
+#     @transaction.atomic
+#     def post(self,request,token):
+#         try:
+#             token1 = KnoxAuthtoken.objects.get(token_key=token)
+#         except:
+#             data = {
+#                     "message" : "Invalid Access Token"
+#                 }
+#             return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         user = token1.user_id
+#         usertable = UserProfile.objects.get(id=user)
+#         userdata = usertable.id
+#         role3 = Role.objects.get(role='VENDOR')
+#         venrole = role3.role_id
+#         roles = UserRole.objects.filter(role_id=venrole).filter(user_id=userdata)
+#         if(CompanyProfile.objects.filter(user=userdata, is_active='True')):
+#             if roles.exists():
+#                 if token1.expiry < datetime.now(utc):
+#                     KnoxAuthtoken.objects.filter(user=user).delete()
+#                     data = {"message":'Session Expired, Please login again'}
+#                     return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
+#                 else:
+#                     serializer = self.get_serializer(data=request.data)
+#                     if serializer.is_valid(raise_exception=True):
+#                         procategory = serializer.validated_data['category']
+#                         protitle = serializer.validated_data['title']
+#                         prodescription = serializer.validated_data['description']
+#                         protype = serializer.validated_data['type']
+#                         probrand = serializer.validated_data['brand'] 
+#                         proquantity = serializer.validated_data['quantity']
+#                         proprice = serializer.validated_data['price']
+#                         prodiscount = serializer.validated_data['discount']
+#                         pronew = serializer.validated_data['new']
+#                         prosale =  serializer.validated_data['sale']
+#                         procollection = serializer.validated_data['collection']
+#                         prosize = serializer.validated_data['size']
+#                         procolor = serializer.validated_data['color']
+#                         propath = serializer.validated_data['path']
+#                         prodimension = serializer.validated_data['dimensions']
+#                         proweight = serializer.validated_data['weight']
                         
-                        if prodimension =='':
-                            return Response({"messgae":"Please use the following format: L X B X H and values should be greater than 0.5 cm"})
-                        strval = 'SKU'+'-'+probrand.upper()+'-'+prosize.upper()+'-'+procolor.upper()
+#                         if prodimension =='':
+#                             return Response({"messgae":"Please use the following format: L X B X H and values should be greater than 0.5 cm"})
+#                         strval = 'SKU'+'-'+probrand.upper()+'-'+prosize.upper()+'-'+procolor.upper()
 
-                        custom_url = 'http://50.18.24.167/media/product/images/' + str(propath)
+#                         custom_url = 'http://50.18.24.167/media/product/images/' + str(propath)
                         
-                        if(Category.objects.filter(category_name__iexact=procategory)):
-                            tablecategory = Category.objects.get(category_name__iexact=procategory)
-                            if proprice >= prodiscount:
-                                protable = Product.objects.create(title=protitle,
-                                description=prodescription, 
-                                quantity=proquantity, 
-                                price=round(proprice+proprice*0.18,2),
-                                discount=prodiscount,
-                                user=usertable, 
-                                category_id=tablecategory.id, 
-                                category = tablecategory.category_name,
-                                type = protype,
-                                brand=probrand,
-                                new=pronew,
-                                sale=prosale,
-                                dimensions=prodimension,
-                                weight=proweight,
-                                created_at=datetime.now(),
-                                updated_at=datetime.now()
-                                )
-                                ava = protable.stock
-                                total = ava + proquantity
+#                         if(Category.objects.filter(category_name__iexact=procategory)):
+#                             tablecategory = Category.objects.get(category_name__iexact=procategory)
+#                             if proprice >= prodiscount:
+#                                 protable = Product.objects.create(title=protitle,
+#                                 description=prodescription, 
+#                                 quantity=proquantity, 
+#                                 price=round(proprice+proprice*0.18,2),
+#                                 discount=prodiscount,
+#                                 user=usertable, 
+#                                 category_id=tablecategory.id, 
+#                                 category = tablecategory.category_name,
+#                                 type = protype,
+#                                 brand=probrand,
+#                                 new=pronew,
+#                                 sale=prosale,
+#                                 dimensions=prodimension,
+#                                 weight=proweight,
+#                                 created_at=datetime.now(),
+#                                 updated_at=datetime.now()
+#                                 )
+#                                 ava = protable.stock
+#                                 total = ava + proquantity
 
-                                cmpny=CompanyProfile.objects.get(user=userdata)
-                                countrycmpn=cmpny.country
-                                if countrycmpn=='INDIA':
-                                    stripe.api_key = STRIPE_SECRET_KEY
-                                    stpr=stripe.Product.create(name=protable.title)
-                                    amount = protable.price-(protable.price*protable.discount/100)
-                                    stpric=stripe.Price.create(unit_amount=int(amount*100),currency="inr",product=stpr['id'])
-                                    Product.objects.filter(id = protable.id,category_id=tablecategory.id).update(stock=total,alias='PRO-'+str(protable.id),strproduct=stpr['id'],strprice=stpric['id'])
-                                elif countrycmpn=='UNITED STATES':
-                                    stripe.api_key = STRIPE_SECRET_US_KEY
-                                    stpr=stripe.Product.create(name=protable.title)
-                                    amount = protable.price-(protable.price*protable.discount/100)
-                                    stpric=stripe.Price.create(unit_amount=int(amount),currency="usd",product=stpr['id'])
-                                    Product.objects.filter(id = protable.id,category_id=tablecategory.id).update(stock=total,alias='PRO-'+str(protable.id),strproduct=stpr['id'],strprice=stpric['id'])
-                                else:
-                                    return Response({"message":"Country not allowed"},status=status.HTTP_406_NOT_ACCEPTABLE)
+#                                 cmpny=CompanyProfile.objects.get(user=userdata)
+#                                 countrycmpn=cmpny.country
+#                                 if countrycmpn=='INDIA':
+#                                     stripe.api_key = STRIPE_SECRET_KEY
+#                                     stpr=stripe.Product.create(name=protable.title)
+#                                     amount = protable.price-(protable.price*protable.discount/100)
+#                                     stpric=stripe.Price.create(unit_amount=int(amount*100),currency="inr",product=stpr['id'])
+#                                     Product.objects.filter(id = protable.id,category_id=tablecategory.id).update(stock=total,alias='PRO-'+str(protable.id),strproduct=stpr['id'],strprice=stpric['id'])
+#                                 elif countrycmpn=='UNITED STATES':
+#                                     stripe.api_key = STRIPE_SECRET_US_KEY
+#                                     stpr=stripe.Product.create(name=protable.title)
+#                                     amount = protable.price-(protable.price*protable.discount/100)
+#                                     stpric=stripe.Price.create(unit_amount=int(amount),currency="usd",product=stpr['id'])
+#                                     Product.objects.filter(id = protable.id,category_id=tablecategory.id).update(stock=total,alias='PRO-'+str(protable.id),strproduct=stpr['id'],strprice=stpric['id'])
+#                                 else:
+#                                     return Response({"message":"Country not allowed"},status=status.HTTP_406_NOT_ACCEPTABLE)
 
-                                var = variants.objects.create(id=protable.id,sku=strval,size=prosize,color=procolor)
+#                                 var = variants.objects.create(id=protable.id,sku=strval,size=prosize,color=procolor)
                                 
-                                i=images.objects.create(id=protable.id,alt=var.color,path=propath,src=custom_url,variant_id=var.variant_id)
-                                variants.objects.filter(variant_id=i.variant_id).update(image_id=i.image_id)
+#                                 i=images.objects.create(id=protable.id,alt=var.color,path=propath,src=custom_url,variant_id=var.variant_id)
+#                                 variants.objects.filter(variant_id=i.variant_id).update(image_id=i.image_id)
                                 
-                                col = collection.objects.create(id=protable.id,collection=procollection)
+#                                 col = collection.objects.create(id=protable.id,collection=procollection)
 
-                                tag = tags.objects.create(id=protable.id,tags=probrand)
-                                tag = tags.objects.create(id=protable.id,tags=prosize)
-                                tag = tags.objects.create(id=protable.id,tags=procolor)
+#                                 tag = tags.objects.create(id=protable.id,tags=probrand)
+#                                 tag = tags.objects.create(id=protable.id,tags=prosize)
+#                                 tag = tags.objects.create(id=protable.id,tags=procolor)
 
-                                if pronew ==True:
-                                    tags.objects.create(id=protable.id,tags='new')
-                                else:
-                                    pass
+#                                 if pronew ==True:
+#                                     tags.objects.create(id=protable.id,tags='new')
+#                                 else:
+#                                     pass
                                 
-                                data = {"message":'Product Added successfully'}
-                                return Response(data, status=status.HTTP_200_OK)
-                            else:
-                                return Response({"message" : "Discount percentage should be inbetween 0 to 100."}, status=status.HTTP_406_NOT_ACCEPTABLE)
-                        else:
-                            data = {'message': "Category Not Found"}
-                            return Response(data, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        data = {'message': "Details Not Found"}
-                        return Response(data, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                data={'message' : "Current User is not Vendor"}
-                return Response(data, status=status.HTTP_404_NOT_FOUND)
-        else:
-            data = {"message":'User is in In-Active, please Activate your company account'}
-            return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
+#                                 data = {"message":'Product Added successfully'}
+#                                 return Response(data, status=status.HTTP_200_OK)
+#                             else:
+#                                 return Response({"message" : "Discount percentage should be inbetween 0 to 100."}, status=status.HTTP_406_NOT_ACCEPTABLE)
+#                         else:
+#                             data = {'message': "Category Not Found"}
+#                             return Response(data, status=status.HTTP_400_BAD_REQUEST)
+#                     else:
+#                         data = {'message': "Details Not Found"}
+#                         return Response(data, status=status.HTTP_400_BAD_REQUEST)
+#             else:
+#                 data={'message' : "Current User is not Vendor"}
+#                 return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         else:
+#             data = {"message":'User is in In-Active, please Activate your company account'}
+#             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 
 
-class vendorproductsapiget(CreateAPIView):
-    serializer_class = vend_products
+# class vendorproductsapiget(CreateAPIView):
+#     serializer_class = vend_products
 
-    @transaction.atomic
-    def post(self,request,token):
-        try:
-            token1 = KnoxAuthtoken.objects.get(token_key=token)
-        except:
-            data = {
-                    "message" : "Invalid Access Token"
-                }
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
-        user = token1.user_id
-        usertable = UserProfile.objects.get(id=user)
-        userdata = usertable.id
-        role3 = Role.objects.get(role='VENDOR')
-        venrole = role3.role_id
-        roles = UserRole.objects.filter(role_id=venrole).filter(user_id=userdata)
-        if(CompanyProfile.objects.filter(user=userdata, is_active='True')):
-            if roles.exists():
-                if token1.expiry < datetime.now(utc):
-                    KnoxAuthtoken.objects.filter(user=user).delete()
-                    data = {"message":'Session Expired, Please login again'}
-                    return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
-                else:
-                    serializer = self.get_serializer(data=request.data)
-                    if serializer.is_valid(raise_exception=True):
-                        pageno = serializer.validated_data['pageno']
-                        table = Product.objects.filter(user=userdata)
-                        if table.exists():
-                            prodata = table.values('id')
-                            datalist =[] 
+#     @transaction.atomic
+#     def post(self,request,token):
+#         try:
+#             token1 = KnoxAuthtoken.objects.get(token_key=token)
+#         except:
+#             data = {
+#                     "message" : "Invalid Access Token"
+#                 }
+#             return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         user = token1.user_id
+#         usertable = UserProfile.objects.get(id=user)
+#         userdata = usertable.id
+#         role3 = Role.objects.get(role='VENDOR')
+#         venrole = role3.role_id
+#         roles = UserRole.objects.filter(role_id=venrole).filter(user_id=userdata)
+#         if(CompanyProfile.objects.filter(user=userdata, is_active='True')):
+#             if roles.exists():
+#                 if token1.expiry < datetime.now(utc):
+#                     KnoxAuthtoken.objects.filter(user=user).delete()
+#                     data = {"message":'Session Expired, Please login again'}
+#                     return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
+#                 else:
+#                     serializer = self.get_serializer(data=request.data)
+#                     if serializer.is_valid(raise_exception=True):
+#                         pageno = serializer.validated_data['pageno']
+#                         table = Product.objects.filter(user=userdata)
+#                         if table.exists():
+#                             prodata = table.values('id')
+#                             datalist =[] 
 
-                            for i in prodata:
-                                try:
-                                    pro = Product.objects.get(id = i['id'])
-                                    col = collection.objects.filter(id=i['id']).values_list('collection',flat=True)
-                                    var = variants.objects.filter(id=i['id']).values()
-                                    img = images.objects.filter(id=i['id']).values()
-                                    t = tags.objects.filter(id=i['id']).values_list('tags',flat=True)
-                                    vendor = CompanyProfile.objects.get(user=pro.user)
+#                             for i in prodata:
+#                                 try:
+#                                     pro = Product.objects.get(id = i['id'])
+#                                     col = collection.objects.filter(id=i['id']).values_list('collection',flat=True)
+#                                     var = variants.objects.filter(id=i['id']).values()
+#                                     img = images.objects.filter(id=i['id']).values()
+#                                     t = tags.objects.filter(id=i['id']).values_list('tags',flat=True)
+#                                     vendor = CompanyProfile.objects.get(user=pro.user)
 
-                                    data = {
-                                        "id": pro.id,
-                                        "title": pro.title,
-                                        "description": pro.description, 
-                                        "type": pro.type,
-                                        "brand": pro.brand,
-                                        "collection": col,
-                                        "category": pro.category,
-                                        "price": pro.price,
-                                        "sale": pro.sale,
-                                        "discount": pro.discount,
-                                        "stock": pro.stock,
-                                        "new": pro.new,
-                                        "tags":t,
-                                        "variants" : var,
-                                        "images" : img,
-                                        "sold_by" : vendor.org_name,
-                                        "weight": pro.weight,
-                                        "dimensions":pro.dimensions
-                                    }
-                                    datalist.append(data)
-                                    paginator = Paginator(datalist,prperpage)
-                                    page = request.GET.get("page",pageno)
-                                    object_list = paginator.page(page)
-                                    a=list(object_list)
-                                    data1 = {
-                                        "products_data":a,
-                                        "total_pages":paginator.num_pages,
-                                        "products_per_page":prperpage,
-                                        "total_products":paginator.count
-                                    }
-                                except:
-                                    pass
-                            try:
-                                return Response(data1,status=status.HTTP_200_OK)
-                            except:
-                                return Response({"message":"pagination value error"},status=status.HTTP_400_BAD_REQUEST)
-                        else:
-                            data = {"message":'Details Not Found'}
-                            return Response(data, status=status.HTTP_404_NOT_FOUND)
-                    else:
-                        return Response({"message":"Serializer value error"},status=status.HTTP_400_BAD_REQUEST)
-            else:
-                data={'message':"Current User is not Vendor"}
-                return Response(data, status=status.HTTP_404_NOT_FOUND)
-        else:
-            data = {"message":'User is in In-Active, please Activate your Company account'}
-            return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
+#                                     data = {
+#                                         "id": pro.id,
+#                                         "title": pro.title,
+#                                         "description": pro.description, 
+#                                         "type": pro.type,
+#                                         "brand": pro.brand,
+#                                         "collection": col,
+#                                         "category": pro.category,
+#                                         "price": pro.price,
+#                                         "sale": pro.sale,
+#                                         "discount": pro.discount,
+#                                         "stock": pro.stock,
+#                                         "new": pro.new,
+#                                         "tags":t,
+#                                         "variants" : var,
+#                                         "images" : img,
+#                                         "sold_by" : vendor.org_name,
+#                                         "weight": pro.weight,
+#                                         "dimensions":pro.dimensions
+#                                     }
+#                                     datalist.append(data)
+#                                     paginator = Paginator(datalist,prperpage)
+#                                     page = request.GET.get("page",pageno)
+#                                     object_list = paginator.page(page)
+#                                     a=list(object_list)
+#                                     data1 = {
+#                                         "products_data":a,
+#                                         "total_pages":paginator.num_pages,
+#                                         "products_per_page":prperpage,
+#                                         "total_products":paginator.count
+#                                     }
+#                                 except:
+#                                     pass
+#                             try:
+#                                 return Response(data1,status=status.HTTP_200_OK)
+#                             except:
+#                                 return Response({"message":"pagination value error"},status=status.HTTP_400_BAD_REQUEST)
+#                         else:
+#                             data = {"message":'Details Not Found'}
+#                             return Response(data, status=status.HTTP_404_NOT_FOUND)
+#                     else:
+#                         return Response({"message":"Serializer value error"},status=status.HTTP_400_BAD_REQUEST)
+#             else:
+#                 data={'message':"Current User is not Vendor"}
+#                 return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         else:
+#             data = {"message":'User is in In-Active, please Activate your Company account'}
+#             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 
-class AddProductVariantView(CreateAPIView):
-    serializer_class = product_variant
+# class AddProductVariantView(CreateAPIView):
+#     serializer_class = product_variant
 
-    @transaction.atomic
-    def post(self,request,token,pid):
-        try:
-            token1 = KnoxAuthtoken.objects.get(token_key=token)
-        except:
-            data = {
-                    "message" : "Invalid Access Token"
-                }
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
-        user = token1.user_id
-        usertable = UserProfile.objects.get(id=user)
-        userdata = usertable.id
-        role3 = Role.objects.get(role='VENDOR')
-        venrole = role3.role_id
-        roles = UserRole.objects.filter(role_id=venrole).filter(user_id=userdata)
-        if(CompanyProfile.objects.filter(user=userdata, is_active='True')):
-            if roles.exists():
-                if token1.expiry < datetime.now(utc):
-                    KnoxAuthtoken.objects.filter(user=user).delete()
-                    data = {"message":'Session Expired, Please login again'}
-                    return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
-                else:
-                    if(Product.objects.filter(user=userdata, id=pid)):
-                        serializer = self.get_serializer(data=request.data)
-                        if serializer.is_valid(raise_exception=True):
-                            procollection = serializer.validated_data['collection']
-                            prosize = serializer.validated_data['size']
-                            procolor = serializer.validated_data['color']
-                            propath = serializer.validated_data['path']
-                            val = random.randint(1000,9999)
-                            strval = 'SKU'+str(val)
+#     @transaction.atomic
+#     def post(self,request,token,pid):
+#         try:
+#             token1 = KnoxAuthtoken.objects.get(token_key=token)
+#         except:
+#             data = {
+#                     "message" : "Invalid Access Token"
+#                 }
+#             return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         user = token1.user_id
+#         usertable = UserProfile.objects.get(id=user)
+#         userdata = usertable.id
+#         role3 = Role.objects.get(role='VENDOR')
+#         venrole = role3.role_id
+#         roles = UserRole.objects.filter(role_id=venrole).filter(user_id=userdata)
+#         if(CompanyProfile.objects.filter(user=userdata, is_active='True')):
+#             if roles.exists():
+#                 if token1.expiry < datetime.now(utc):
+#                     KnoxAuthtoken.objects.filter(user=user).delete()
+#                     data = {"message":'Session Expired, Please login again'}
+#                     return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
+#                 else:
+#                     if(Product.objects.filter(user=userdata, id=pid)):
+#                         serializer = self.get_serializer(data=request.data)
+#                         if serializer.is_valid(raise_exception=True):
+#                             procollection = serializer.validated_data['collection']
+#                             prosize = serializer.validated_data['size']
+#                             procolor = serializer.validated_data['color']
+#                             propath = serializer.validated_data['path']
+#                             val = random.randint(1000,9999)
+#                             strval = 'SKU'+str(val)
 
-                            custom_url = 'http://50.18.24.167/media/product/images/' + str(propath)
-                            pro = Product.objects.get(id=pid)
-                            var = variants.objects.create(id=pro.id,sku=strval,size=prosize,color=procolor)
+#                             custom_url = 'http://50.18.24.167/media/product/images/' + str(propath)
+#                             pro = Product.objects.get(id=pid)
+#                             var = variants.objects.create(id=pro.id,sku=strval,size=prosize,color=procolor)
                             
-                            i=images.objects.create(id=pro.id,alt=var.color,path=propath,src=custom_url,variant_id=var.variant_id)
-                            variants.objects.filter(variant_id=i.variant_id).update(image_id=i.image_id)
+#                             i=images.objects.create(id=pro.id,alt=var.color,path=propath,src=custom_url,variant_id=var.variant_id)
+#                             variants.objects.filter(variant_id=i.variant_id).update(image_id=i.image_id)
                             
-                            col = collection.objects.create(id=pro.id,collection=procollection)
+#                             col = collection.objects.create(id=pro.id,collection=procollection)
 
-                            tag = tags.objects.create(id=pro.id,tags=prosize)
-                            tag = tags.objects.create(id=pro.id,tags=procolor)
+#                             tag = tags.objects.create(id=pro.id,tags=prosize)
+#                             tag = tags.objects.create(id=pro.id,tags=procolor)
 
-                            return Response({"message":"Successfully Added New Varinat"}, status=status.HTTP_201_CREATED)
-                        else :
-                            return Response({"message":"Serializer value error"},status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        return Response({"message":"This Product Does not exists fot this user"},status=status.HTTP_404_NOT_FOUND)    
-            else:
-                data={'message' : "Current User is not Vendor"}
-                return Response(data, status=status.HTTP_404_NOT_FOUND)
-        else:
-            data = {"message":'User is in In-Active, please Activate your company account'}
-            return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
-
-
-
-class ProductDetailsUpdate(CreateAPIView):
-    serializer_class = vendor_products_update
-
-    @transaction.atomic
-    def put(self,request,token,pid):
-        try:
-            token1 = KnoxAuthtoken.objects.get(token_key=token)
-        except:
-            data = {
-                    "message" : "Invalid Token"
-                }
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
-        user = token1.user_id
-        usertable = UserProfile.objects.get(id=user)
-        userdata = usertable.id
-        role3 = Role.objects.get(role='VENDOR')
-        venrole = role3.role_id
-        roles = UserRole.objects.filter(role_id=venrole).filter(user_id=userdata)
-        if(CompanyProfile.objects.filter(user=userdata, is_active='True')):
-            if roles.exists():
-                if token1.expiry < datetime.now(utc):
-                    KnoxAuthtoken.objects.filter(user=user).delete()
-                    data = {"message":'Session Expired, Please login again'}
-                    return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
-                else:
-                    if(Product.objects.filter(user=userdata, id=pid)):
-                        serializer = self.get_serializer(usertable, data=request.data)
-                        if serializer.is_valid(raise_exception=True):
-                            user = serializer.save()
-                            category = serializer.data['category']
-                            productname = serializer.data['title']
-                            description = serializer.data['description']
-                            unitprice = serializer.data['price']
-                            discount1= serializer.data['discount']
-                            dimension = serializer.data['dimensions']
-                            weight = serializer.data['weight']
-
-                            if(Category.objects.filter(category_name__iexact=category)):
-                                cat = Category.objects.get(category_name__iexact=category)
-                                if unitprice >= discount1:
-                                    Product.objects.filter(id=pid, user=userdata).update(
-                                        category=cat.category_name,category_id = cat.id, title=productname, description=description,
-                                        price=round(unitprice,2), discount=discount1,dimensions=dimension,weight=weight,updated_at=datetime.now())
-                                    data = {"message":'Product Details Updated successfully'}
-                                    return Response(data, status=status.HTTP_200_OK)
-                                else:
-                                    return Response({"message" : "Discount Price should be greater than Unit Price"}, status=status.HTTP_406_NOT_ACCEPTABLE)
-                            else:
-                                data = {'message': "Category Not Found"}
-                                return Response(data, status=status.HTTP_400_BAD_REQUEST)
-                        else:
-                            data = {'message' :"Incorrect Input Fields" }
-                            return Response(data, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        data = {'message' : "Product details Not Found for this user"}
-                        return Response(data, status=status.HTTP_404_NOT_FOUND)
-            else:
-                data={'message' : "Current User is not Vendor"}
-                return Response(data, status=status.HTTP_404_NOT_FOUND)
-        else:
-            data = {"message":'User is in In-Active, please Activate your Company account'}
-            return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
+#                             return Response({"message":"Successfully Added New Varinat"}, status=status.HTTP_201_CREATED)
+#                         else :
+#                             return Response({"message":"Serializer value error"},status=status.HTTP_400_BAD_REQUEST)
+#                     else:
+#                         return Response({"message":"This Product Does not exists fot this user"},status=status.HTTP_404_NOT_FOUND)    
+#             else:
+#                 data={'message' : "Current User is not Vendor"}
+#                 return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         else:
+#             data = {"message":'User is in In-Active, please Activate your company account'}
+#             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
-    @transaction.atomic
-    def delete(self,request,token,pid):
-        try:
-            token1 = KnoxAuthtoken.objects.get(token_key=token)
-        except:
-            data = {
-                    "message" : "Invalid Token"
-                }
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
-        user = token1.user_id
-        usertable = UserProfile.objects.get(id=user)
-        userdata = usertable.id
-        role3 = Role.objects.get(role='VENDOR')
-        venrole = role3.role_id
-        roles = UserRole.objects.filter(role_id=venrole).filter(user_id=userdata)
-        if(CompanyProfile.objects.filter(user=userdata, is_active='True')):
-            if roles.exists():
-                if token1.expiry < datetime.now(utc):
-                    KnoxAuthtoken.objects.filter(user=user).delete()
-                    data = {"message":'Session Expired, Please login again'}
-                    return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
-                else:
-                    table = Product.objects.filter(user=userdata, id=pid)
-                    if table.exists():
-                        Product.objects.filter(user=userdata, id=pid).update(is_deleted=True,updated_at=datetime.now())
-                        data = {"message":'Product Removed Successfully'}
-                        return Response(data, status=status.HTTP_200_OK)
-                    else:
-                        data = {'message' : "Details Not Found"}
-                        return Response(data, status=status.HTTP_404_NOT_FOUND)
-            else:
-                data = {'message' : "Current User is not Vendor"}
-                return Response(data, status=status.HTTP_404_NOT_FOUND)
-        else:
-            data = {"message":'User is in In-Active, please Activate your Company account'}
-            return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)    
+
+# # class ProductDetailsUpdate(CreateAPIView):
+#     serializer_class = vendor_products_update
+
+#     @transaction.atomic
+#     def put(self,request,token,pid):
+#         try:
+#             token1 = KnoxAuthtoken.objects.get(token_key=token)
+#         except:
+#             data = {
+#                     "message" : "Invalid Token"
+#                 }
+#             return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         user = token1.user_id
+#         usertable = UserProfile.objects.get(id=user)
+#         userdata = usertable.id
+#         role3 = Role.objects.get(role='VENDOR')
+#         venrole = role3.role_id
+#         roles = UserRole.objects.filter(role_id=venrole).filter(user_id=userdata)
+#         if(CompanyProfile.objects.filter(user=userdata, is_active='True')):
+#             if roles.exists():
+#                 if token1.expiry < datetime.now(utc):
+#                     KnoxAuthtoken.objects.filter(user=user).delete()
+#                     data = {"message":'Session Expired, Please login again'}
+#                     return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
+#                 else:
+#                     if(Product.objects.filter(user=userdata, id=pid)):
+#                         serializer = self.get_serializer(usertable, data=request.data)
+#                         if serializer.is_valid(raise_exception=True):
+#                             user = serializer.save()
+#                             category = serializer.data['category']
+#                             productname = serializer.data['title']
+#                             description = serializer.data['description']
+#                             unitprice = serializer.data['price']
+#                             discount1= serializer.data['discount']
+#                             dimension = serializer.data['dimensions']
+#                             weight = serializer.data['weight']
+
+#                             if(Category.objects.filter(category_name__iexact=category)):
+#                                 cat = Category.objects.get(category_name__iexact=category)
+#                                 if unitprice >= discount1:
+#                                     Product.objects.filter(id=pid, user=userdata).update(
+#                                         category=cat.category_name,category_id = cat.id, title=productname, description=description,
+#                                         price=round(unitprice,2), discount=discount1,dimensions=dimension,weight=weight,updated_at=datetime.now())
+#                                     data = {"message":'Product Details Updated successfully'}
+#                                     return Response(data, status=status.HTTP_200_OK)
+#                                 else:
+#                                     return Response({"message" : "Discount Price should be greater than Unit Price"}, status=status.HTTP_406_NOT_ACCEPTABLE)
+#                             else:
+#                                 data = {'message': "Category Not Found"}
+#                                 return Response(data, status=status.HTTP_400_BAD_REQUEST)
+#                         else:
+#                             data = {'message' :"Incorrect Input Fields" }
+#                             return Response(data, status=status.HTTP_400_BAD_REQUEST)
+#                     else:
+#                         data = {'message' : "Product details Not Found for this user"}
+#                         return Response(data, status=status.HTTP_404_NOT_FOUND)
+#             else:
+#                 data={'message' : "Current User is not Vendor"}
+#                 return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         else:
+#             data = {"message":'User is in In-Active, please Activate your Company account'}
+#             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+
+#     @transaction.atomic
+#     def delete(self,request,token,pid):
+#         try:
+#             token1 = KnoxAuthtoken.objects.get(token_key=token)
+#         except:
+#             data = {
+#                     "message" : "Invalid Token"
+#                 }
+#             return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         user = token1.user_id
+#         usertable = UserProfile.objects.get(id=user)
+#         userdata = usertable.id
+#         role3 = Role.objects.get(role='VENDOR')
+#         venrole = role3.role_id
+#         roles = UserRole.objects.filter(role_id=venrole).filter(user_id=userdata)
+#         if(CompanyProfile.objects.filter(user=userdata, is_active='True')):
+#             if roles.exists():
+#                 if token1.expiry < datetime.now(utc):
+#                     KnoxAuthtoken.objects.filter(user=user).delete()
+#                     data = {"message":'Session Expired, Please login again'}
+#                     return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
+#                 else:
+#                     table = Product.objects.filter(user=userdata, id=pid)
+#                     if table.exists():
+#                         Product.objects.filter(user=userdata, id=pid).update(is_deleted=True,updated_at=datetime.now())
+#                         data = {"message":'Product Removed Successfully'}
+#                         return Response(data, status=status.HTTP_200_OK)
+#                     else:
+#                         data = {'message' : "Details Not Found"}
+#                         return Response(data, status=status.HTTP_404_NOT_FOUND)
+#             else:
+#                 data = {'message' : "Current User is not Vendor"}
+#                 return Response(data, status=status.HTTP_404_NOT_FOUND)
+#         else:
+#             data = {"message":'User is in In-Active, please Activate your Company account'}
+#             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)    
 
 
 class MobileSpecificationView(CreateAPIView):    

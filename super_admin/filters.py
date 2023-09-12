@@ -71,10 +71,9 @@ class SAProductsIncludingFilters(APIView):
                         except:
                             d1=datetime.now().date()
                             d2=datetime.now().date()
-                        product_list =Product.objects.filter(user_id=userdata,title__icontains=name,brand__icontains=brand,category__icontains=category,type__icontains=type,price__range=[p1,p2],created_at__range=(d1,d2+timedelta(days=1))).values('id').order_by('-created_at','-id')                        
                         if d1<=d2:
-                            l=[]
-                            if product_list.exists():
+                            if p1==0 and p2==1000000000:
+                                product_list =Product.objects.filter(user_id=userdata,title__icontains=name,brand__icontains=brand,category__icontains=category,type__icontains=type,created_at__range=(d1,d2+timedelta(days=1))).values('id').order_by('-created_at','-id')
                                 datalist =[]
                                 for i in product_list:
                                     pro = Product.objects.get(id = i['id'])
@@ -91,17 +90,31 @@ class SAProductsIncludingFilters(APIView):
                                         "type": pro.type,
                                         "brand": pro.brand,
                                         "collection": col,
-                                        "category": pro.category,
-                                        "price": round(pro.price,2),
                                         "sale": pro.sale,
-                                        "discount": pro.discount,
-                                        "stock": pro.stock,
+                                        "new": pro.new,
+                                        "user_id": userdata,
+                                        "category_id": pro.category_id,
+                                        "category": pro.category,
+                                        "rating": pro.rating,
+                                        "is_active": pro.is_active,
+                                        "alias": pro.alias,
+                                        "dimensions": pro.dimensions,
+                                        "weight": pro.weight,
+                                        "status": pro.status,
+                                        "is_charged": pro.is_charged,
+                                        "shipping_charges": pro.shipping_charges,
+                                        "other_charges": pro.other_charges,
+                                        "is_wattanty": pro.is_wattanty,
+                                        "warranty_months": pro.warranty_months,
+                                        "warranty_src": pro.warranty_src,
+                                        "warranty_path": pro.warranty_path.name,
+                                        "created_at": pro.created_at.date(),
+                                        "updated_at" : pro.updated_at.date(),
                                         "new": pro.new,
                                         "tags":t,
                                         "variants" : var,
                                         "images" : img,
-                                        "sold_by" : vendor.org_name,
-                                        "created_at":pro.created_at.date()
+                                        "sold_by" : vendor.org_name
                                     }
                                     datalist.append(data)
                                 paginator = Paginator(datalist,prperpage)
@@ -118,17 +131,79 @@ class SAProductsIncludingFilters(APIView):
                                     return Response(data1, status=status.HTTP_200_OK)
                                 except:
                                     return Response({"message":"Page/value error"},status=status.HTTP_404_NOT_FOUND)
-                            paginator = Paginator(l,prperpage)
-                            page = request.GET.get("page",pageno)
-                            object_list = paginator.page(page)
-                            a=list(object_list)
-                            data1 = {
-                                "my_products_data":a,
-                                "total_pages":paginator.num_pages,
-                                "products_per_page":prperpage,
-                                "total_products":paginator.count
-                            }
-                            return Response(data1, status=status.HTTP_200_OK)
+                            else:
+                                p = Product.objects.filter(user=userdata).values_list('id')
+                                var = variants.objects.filter(price__range=[p1,p2],id__in=p).values().order_by('-id')
+                                l=[]
+                                if var.exists():
+                                    datalist=[]
+                                    for i in var:
+                                        pro = Product.objects.get(id = i['id'])
+                                        col = collection.objects.filter(id=i['id']).values_list('collection',flat=True)
+                                        var = variants.objects.filter(id=i['id']).values()
+                                        img = images.objects.filter(id=i['id']).values()
+                                        t = tags.objects.filter(id=i['id']).values_list('tags',flat=True)
+                                        vendor = CompanyProfile.objects.get(user=pro.user)
+
+                                        data = {
+                                            "id": pro.id,
+                                            "title": pro.title,
+                                            "description": pro.description, 
+                                            "type": pro.type,
+                                            "brand": pro.brand,
+                                            "collection": col,
+                                            "sale": pro.sale,
+                                            "new": pro.new,
+                                            "user_id": userdata,
+                                            "category_id": pro.category_id,
+                                            "category": pro.category,
+                                            "rating": pro.rating,
+                                            "is_active": pro.is_active,
+                                            "alias": pro.alias,
+                                            "dimensions": pro.dimensions,
+                                            "weight": pro.weight,
+                                            "status": pro.status,
+                                            "is_charged": pro.is_charged,
+                                            "shipping_charges": pro.shipping_charges,
+                                            "other_charges": pro.other_charges,
+                                            "is_wattanty": pro.is_wattanty,
+                                            "warranty_months": pro.warranty_months,
+                                            "warranty_src": pro.warranty_src,
+                                            "warranty_path": pro.warranty_path.name,
+                                            "created_at": pro.created_at.date(),
+                                            "updated_at" : pro.updated_at.date(),
+                                            "new": pro.new,
+                                            "tags":t,
+                                            "variants" : var,
+                                            "images" : img,
+                                            "sold_by" : vendor.org_name
+                                        }
+                                        datalist.append(data)                                    
+                                    paginator = Paginator(datalist,prperpage)
+                                    page = request.GET.get("page",pageno)
+                                    object_list = paginator.page(page)
+                                    a=list(object_list)
+                                    data1 = {
+                                        "my_products_data":a,
+                                        "total_pages":paginator.num_pages,
+                                        "products_per_page":prperpage,
+                                        "total_products":paginator.count
+                                    }
+                                    try:
+                                        return Response(data1, status=status.HTTP_200_OK)
+                                    except:
+                                        return Response({"message":"Page/value error"},status=status.HTTP_404_NOT_FOUND)     
+                                paginator = Paginator(l,prperpage)
+                                page = request.GET.get("page",pageno)
+                                object_list = paginator.page(page)
+                                a=list(object_list)
+                                data1 = {
+                                    "my_products_data":a,
+                                    "total_pages":paginator.num_pages,
+                                    "products_per_page":prperpage,
+                                    "total_products":paginator.count
+                                }
+                                return Response(data1, status=status.HTTP_200_OK)
                         return Response({"message":"From date should be less than To date"}, status=status.HTTP_406_NOT_ACCEPTABLE)
                     return Response({'message':"Value error"},status=status.HTTP_400_BAD_REQUEST)
             else:
@@ -197,11 +272,10 @@ class SAGetAllProductsIncludingFilters(CreateAPIView):
                             d1=datetime.now().date()
                             d2=datetime.now().date()
 
-                        product_list=Product.objects.filter(title__icontains=name,brand__icontains=brand,category__icontains=category,type__icontains=type,price__range=[p1,p2],created_at__range=(d1,d2+timedelta(days=1))).values().order_by('-created_at','-id')
                         if d1<=d2:
-                            l=[]
-                            if product_list.exists():
-                                datalist =[] 
+                            if p1==0 and p2==1000000000:
+                                product_list =Product.objects.filter(title__icontains=name,brand__icontains=brand,category__icontains=category,type__icontains=type,created_at__range=(d1,d2+timedelta(days=1))).values('id').order_by('-created_at','-id')
+                                datalist =[]
                                 for i in product_list:
                                     pro = Product.objects.get(id = i['id'])
                                     col = collection.objects.filter(id=i['id']).values_list('collection',flat=True)
@@ -217,17 +291,31 @@ class SAGetAllProductsIncludingFilters(CreateAPIView):
                                         "type": pro.type,
                                         "brand": pro.brand,
                                         "collection": col,
-                                        "category": pro.category,
-                                        "price": round(pro.price,2),
                                         "sale": pro.sale,
-                                        "discount": pro.discount,
-                                        "stock": pro.stock,
+                                        "new": pro.new,
+                                        "user_id": userdata,
+                                        "category_id": pro.category_id,
+                                        "category": pro.category,
+                                        "rating": pro.rating,
+                                        "is_active": pro.is_active,
+                                        "alias": pro.alias,
+                                        "dimensions": pro.dimensions,
+                                        "weight": pro.weight,
+                                        "status": pro.status,
+                                        "is_charged": pro.is_charged,
+                                        "shipping_charges": pro.shipping_charges,
+                                        "other_charges": pro.other_charges,
+                                        "is_wattanty": pro.is_wattanty,
+                                        "warranty_months": pro.warranty_months,
+                                        "warranty_src": pro.warranty_src,
+                                        "warranty_path": pro.warranty_path.name,
+                                        "created_at": pro.created_at.date(),
+                                        "updated_at" : pro.updated_at.date(),
                                         "new": pro.new,
                                         "tags":t,
                                         "variants" : var,
                                         "images" : img,
-                                        "sold_by" : vendor.org_name,
-                                        "created_at":pro.created_at.date()
+                                        "sold_by" : vendor.org_name
                                     }
                                     datalist.append(data)
                                 paginator = Paginator(datalist,prperpage)
@@ -235,7 +323,7 @@ class SAGetAllProductsIncludingFilters(CreateAPIView):
                                 object_list = paginator.page(page)
                                 a=list(object_list)
                                 data1 = {
-                                    "all_products_data":a,
+                                    "my_products_data":a,
                                     "total_pages":paginator.num_pages,
                                     "products_per_page":prperpage,
                                     "total_products":paginator.count
@@ -244,17 +332,78 @@ class SAGetAllProductsIncludingFilters(CreateAPIView):
                                     return Response(data1, status=status.HTTP_200_OK)
                                 except:
                                     return Response({"message":"Page/value error"},status=status.HTTP_404_NOT_FOUND)
-                            paginator = Paginator(l,prperpage)
-                            page = request.GET.get("page",pageno)
-                            object_list = paginator.page(page)
-                            a=list(object_list)
-                            data1 = {
-                                "all_products_data":a,
-                                "total_pages":paginator.num_pages,
-                                "products_per_page":prperpage,
-                                "total_products":paginator.count
-                            }
-                            return Response(data1, status=status.HTTP_200_OK)
+                            else:
+                                var = variants.objects.filter(price__range=[p1,p2]).values().order_by('-id')
+                                l=[]
+                                if var.exists():
+                                    datalist=[]
+                                    for i in var:
+                                        pro = Product.objects.get(id = i['id'])
+                                        col = collection.objects.filter(id=i['id']).values_list('collection',flat=True)
+                                        var = variants.objects.filter(id=i['id']).values()
+                                        img = images.objects.filter(id=i['id']).values()
+                                        t = tags.objects.filter(id=i['id']).values_list('tags',flat=True)
+                                        vendor = CompanyProfile.objects.get(user=pro.user)
+
+                                        data = {
+                                            "id": pro.id,
+                                            "title": pro.title,
+                                            "description": pro.description, 
+                                            "type": pro.type,
+                                            "brand": pro.brand,
+                                            "collection": col,
+                                            "sale": pro.sale,
+                                            "new": pro.new,
+                                            "user_id": userdata,
+                                            "category_id": pro.category_id,
+                                            "category": pro.category,
+                                            "rating": pro.rating,
+                                            "is_active": pro.is_active,
+                                            "alias": pro.alias,
+                                            "dimensions": pro.dimensions,
+                                            "weight": pro.weight,
+                                            "status": pro.status,
+                                            "is_charged": pro.is_charged,
+                                            "shipping_charges": pro.shipping_charges,
+                                            "other_charges": pro.other_charges,
+                                            "is_wattanty": pro.is_wattanty,
+                                            "warranty_months": pro.warranty_months,
+                                            "warranty_src": pro.warranty_src,
+                                            "warranty_path": pro.warranty_path.name,
+                                            "created_at": pro.created_at.date(),
+                                            "updated_at" : pro.updated_at.date(),
+                                            "new": pro.new,
+                                            "tags":t,
+                                            "variants" : var,
+                                            "images" : img,
+                                            "sold_by" : vendor.org_name
+                                        }
+                                        datalist.append(data)                                    
+                                    paginator = Paginator(datalist,prperpage)
+                                    page = request.GET.get("page",pageno)
+                                    object_list = paginator.page(page)
+                                    a=list(object_list)
+                                    data1 = {
+                                        "my_products_data":a,
+                                        "total_pages":paginator.num_pages,
+                                        "products_per_page":prperpage,
+                                        "total_products":paginator.count
+                                    }
+                                    try:
+                                        return Response(data1, status=status.HTTP_200_OK)
+                                    except:
+                                        return Response({"message":"Page/value error"},status=status.HTTP_404_NOT_FOUND)     
+                                paginator = Paginator(l,prperpage)
+                                page = request.GET.get("page",pageno)
+                                object_list = paginator.page(page)
+                                a=list(object_list)
+                                data1 = {
+                                    "my_products_data":a,
+                                    "total_pages":paginator.num_pages,
+                                    "products_per_page":prperpage,
+                                    "total_products":paginator.count
+                                }
+                                return Response(data1, status=status.HTTP_200_OK)
                         return Response({"message":"From date should be less than To date"}, status=status.HTTP_406_NOT_ACCEPTABLE)
                     return Response({'message':"Value error"},status=status.HTTP_400_BAD_REQUEST)
             else:

@@ -66,7 +66,7 @@ urlpatterns = [
     path('mywishlist/<token>',WishlistGetApi.as_view(), name='wishlist get api'),
     
     # Wishlist API[DELETE]
-    path('deletewishlist/<token>/<int:pid>',views.wishlistdelete, name='Delete Product from wishlist'),
+    path('deletewishlist/<token>/<int:pid>/<int:vid>',views.wishlistdelete, name='Delete Product from wishlist'),
 
     # Save for Later[POST,DELETE]
     path('savelater/<token>/<pid>',SaveForLaterAPI.as_view(),name='save for later'),

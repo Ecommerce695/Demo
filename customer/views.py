@@ -866,7 +866,7 @@ class AddressView(CreateAPIView):
                     data = {"message":'Session Expired, Please login again'}
                     return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
                 else:
-                    data = UserAddress.objects.filter(user=userdata)
+                    data = UserAddress.objects.filter(user=userdata,is_active=True)
                     if data.exists():
                         data1 = list(data.values())
                         return Response(data1, status=status.HTTP_200_OK)
@@ -979,6 +979,11 @@ class UpdateAddressView(APIView):
         except:
             data = {"message" : "Invalid Access Token"}
             return Response(data, status=status.HTTP_404_NOT_FOUND)
+        try:
+            UserAddress.objects.get(id=aid)
+        except:
+            data ={"message":"Address with id not Found"}
+            return Response(data,status=status.HTTP_404_NOT_FOUND)
 
         user = token1.user_id
         usertable = UserProfile.objects.get(id=user)
@@ -993,11 +998,11 @@ class UpdateAddressView(APIView):
                     data = {"message":"Session Expired, Please login again"}
                     return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
                 else:                 
-                    if UserAddress.objects.filter(user=usertable,id=aid).exists():
-                        UserAddress.objects.filter(user=usertable,id=aid).delete()
-                        return Response({"message":"Address Deleted Successful"}, status=status.HTTP_200_OK)
+                    if UserAddress.objects.filter(user=usertable,id=aid,is_default=True).exists():
+                        return Response({'message':'Cant delete Default Address'},status=status.HTTP_406_NOT_ACCEPTABLE)
                     else:
-                        return Response({"message":"Address with id not Found"},status=status.HTTP_404_NOT_FOUND)
+                        UserAddress.objects.filter(user=usertable,id=aid).update(is_active=False)
+                        return Response({"message":"Address Deleted Successful"}, status=status.HTTP_200_OK)
             else:
                 data ={
                     "warning" : "User not assigned to Role",
@@ -1023,7 +1028,7 @@ def ProductsAPI(request):
             Transaction_table.objects.filter(orderitem=i['orderitem']).update(status='UNPAID',updated_at=datetime.now())
             OrderItemHistory.objects.filter(id=i['orderitem']).update(order_status='FAILED',updated_at=datetime.now())
 
-        product = Product.objects.filter(is_deleted=False).values('id')
+        product = Product.objects.filter(status='Publish').values('id')
         datalist =[]
 
         serializer = serializer_class(data = request.data)
@@ -1182,30 +1187,19 @@ class WishlistView(CreateAPIView):
                     serializer = self.get_serializer(data = request.data)
                     if serializer.is_valid():
                         seri = serializer.validated_data['id']
-                        if(variants.objects.filter(id=seri).exists()):
-                            variant = variants.objects.get(id=seri)
+                        serivariant = serializer.validated_data['variant']
+                        if(variants.objects.filter(variant_id=serivariant,id=seri).exists()):
+                            variant = variants.objects.get(variant_id=serivariant)
                             product = Product.objects.get(id=seri)
-
-                            tb2 = Wishlist.objects.filter(user=userdata, product=seri)
+                            tb2 = Wishlist.objects.filter(user=userdata, product=variant.id,variant=variant.variant_id)
                             if tb2.exists():
                                 data = {"message":'product already exists in wishlist'}
                                 return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
                             else:
-                                img = images.objects.get(id=variant.id)
-                                tb3 = Wishlist.objects.create(
+                                Wishlist.objects.create(
                                     user = usertable,
                                     product = product,
-                                    price = product.price,
-                                    title = product.title,
-                                    category = product.category,
-                                    brand = product.brand,
-                                    discount = product.discount,
-                                    variant = variant.id,
-                                    sku = variant.sku,
-                                    size = variant.size,
-                                    color = variant.color,
-                                    src = img.src,
-                                    type = product.type
+                                    variant = variant.variant_id
                                 )
                                 data = {"message":'Added to wishlist'}
                                 return Response(data, status=status.HTTP_200_OK)
@@ -1224,70 +1218,94 @@ class WishlistView(CreateAPIView):
             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
         
         
-    @transaction.atomic
-    def get(self,request,token):
-        try:
-            token1 = KnoxAuthtoken.objects.get(token_key=token)
-        except:
-            data = {"message" : "Invalid Access Token"}
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
+    # @transaction.atomic
+    # def get(self,request,token):
+        # try:
+        #     token1 = KnoxAuthtoken.objects.get(token_key=token)
+        # except:
+        #     data = {"message" : "Invalid Access Token"}
+        #     return Response(data, status=status.HTTP_404_NOT_FOUND)
 
-        user = token1.user_id
-        usertable = UserProfile.objects.get(id=user)
-        userdata = usertable.id
-        role = Role.objects.get(role='USER')
-        role1 = role.role_id
-        roles = UserRole.objects.filter(role_id=role1,user_id=userdata)
-        if(UserProfile.objects.filter(id=userdata, is_active='True')):
-            if roles.exists():
-                if token1.expiry < datetime.now(utc):
-                    KnoxAuthtoken.objects.filter(user=user).delete()
-                    data = {"message":'Session Expired, Please login again'}
-                    return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
-                else:
-                    data = Wishlist.objects.filter(user=userdata)
-                    if data.exists():
-                        product = Wishlist.objects.filter(user=userdata).values('product')
-                        datalist =[] 
+        # user = token1.user_id
+        # usertable = UserProfile.objects.get(id=user)
+        # userdata = usertable.id
+        # role = Role.objects.get(role='USER')
+        # role1 = role.role_id
+        # roles = UserRole.objects.filter(role_id=role1,user_id=userdata)
+        # if(UserProfile.objects.filter(id=userdata, is_active='True')):
+        #     if roles.exists():
+        #         if token1.expiry < datetime.now(utc):
+        #             KnoxAuthtoken.objects.filter(user=user).delete()
+        #             data = {"message":'Session Expired, Please login again'}
+        #             return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
+        #         else:
+        #             data = Wishlist.objects.filter(user=userdata)
+        #             if data.exists():
+        #                 wishlist_data = Wishlist.objects.filter(user=userdata).values()
+        #                 datalist =[] 
 
-                        for i in product:
-                            pro = Product.objects.get(id = i['product'])
+        #                 for i in wishlist_data:
+        #                     # try:
+        #                     v = variants.objects.get(variant_id=i['variant'])
+        #                     # except:
+        #                     #     pass
+
+        #                     pro = Product.objects.get(id = v.id)
                         
-                            col = collection.objects.filter(id=i["product"]).values_list('collection',flat=True)
-                            var = variants.objects.filter(id=i["product"]).values()
-                            img = images.objects.filter(id=i["product"]).values()
-                            t = tags.objects.filter(id=i["product"]).values_list('tags',flat=True)
+        #                     col = collection.objects.filter(id=v.id).values_list('collection',flat=True)
+        #                     var = variants.objects.filter(id=v.id,variant_id=v.variant_id).values()
+        #                     img = images.objects.filter(id=v.id,variant_id=v.variant_id).values()
+        #                     t = tags.objects.filter(id=v.id).values_list('tags',flat=True)
+        #                     cp = CompanyProfile.objects.get(user=pro.user)
                             
-                            data = {
-                                "id": pro.id,
-                                "title": pro.title,
-                                "description": pro.description, 
-                                "type": pro.type,
-                                "brand": pro.brand,
-                                "collection": col,
-                                "category": pro.category,
-                                "price": pro.price,
-                                "sale": pro.sale,
-                                "discount": pro.discount,
-                                "stock": pro.stock,
-                                "new": pro.new,
-                                "variants" : var,
-                                "images" : img,
-                                "tag":t
-                            }
-                            datalist.append(data)
-                        return Response(datalist, status=status.HTTP_200_OK)
-                    else:
-                        return Response([],status=status.HTTP_200_OK)
-            else:
-                data ={
-                    "warning" : "User not assigned to Role",
-                    "message" : "Activate your account"
-                }
-                return Response(data, status=status.HTTP_404_NOT_FOUND)
-        else:
-            data = {"message":'User is in In-Active, please Activate your account'}
-            return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
+        #                     data = {
+        #                         "id": pro.id,
+        #                         "title": pro.title,
+        #                         "description": pro.description, 
+        #                         "type": pro.type,
+        #                         "brand": pro.brand,
+        #                         "collection": col,
+        #                         "sale": pro.sale,
+        #                         "new": pro.new,
+        #                         # "user_id": userdata,
+        #                         "category_id": pro.category_id,
+        #                         "category": pro.category,
+        #                         "rating": pro.rating,
+        #                         "is_active": pro.is_active,
+        #                         "alias": pro.alias,
+        #                         "dimensions": pro.dimensions,
+        #                         "weight": pro.weight,
+        #                         "status": pro.status,
+        #                         "is_charged": pro.is_charged,
+        #                         "shipping_charges": pro.shipping_charges,
+        #                         "other_charges": pro.other_charges,
+        #                         "is_wattanty": pro.is_wattanty,
+        #                         "warranty_months": pro.warranty_months,
+        #                         "warranty_src": pro.warranty_src,
+        #                         "warranty_path": pro.warranty_path.name,
+        #                         "created_at": pro.created_at.date(),
+        #                         "updated_at" : pro.updated_at.date(),
+        #                         "new": pro.new,
+        #                         "tags":t,
+        #                         "variants" : var,
+        #                         "images" : img,
+        #                         "sold_by" : cp.org_name,
+        #                         "weight": pro.weight,
+        #                         "dimensions":pro.dimensions
+        #                     }
+        #                     datalist.append(data)
+        #                 return Response(datalist, status=status.HTTP_200_OK)
+        #             else:
+        #                 return Response([],status=status.HTTP_200_OK)
+        #     else:
+        #         data ={
+        #             "warning" : "User not assigned to Role",
+        #             "message" : "Activate your account"
+        #         }
+        #         return Response(data, status=status.HTTP_404_NOT_FOUND)
+        # else:
+        #     data = {"message":'User is in In-Active, please Activate your account'}
+        #     return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
 
         
 
@@ -1321,48 +1339,65 @@ class WishlistGetApi(CreateAPIView):
                         data = Wishlist.objects.filter(user=userdata)
                         l=[]
                         if data.exists():
-                            product = Wishlist.objects.filter(user=userdata).values('product').order_by('-id')
+                            wishlist_data = Wishlist.objects.filter(user=userdata).values().order_by('-created_at')
                             datalist =[] 
 
-                            for i in product:
-                                try:
-                                    pro = Product.objects.get(id = i['product'])
+                            for i in wishlist_data:
+                                v = variants.objects.get(variant_id=i['variant'])
+                                pro = Product.objects.get(id = v.id)
+                            
+                                col = collection.objects.filter(id=v.id).values_list('collection',flat=True)
+                                var = variants.objects.filter(id=v.id,variant_id=v.variant_id).values()
+                                img = images.objects.filter(id=v.id,variant_id=v.variant_id).values()
+                                t = tags.objects.filter(id=v.id).values_list('tags',flat=True)
+                                cp = CompanyProfile.objects.get(user=pro.user)
                                 
-                                    col = collection.objects.filter(id=i["product"]).values_list('collection',flat=True)
-                                    var = variants.objects.filter(id=i["product"]).values()
-                                    img = images.objects.filter(id=i["product"]).values()
-                                    t = tags.objects.filter(id=i["product"]).values_list('tags',flat=True)
-                                    
-                                    data = {
-                                        "id": pro.id,
-                                        "title": pro.title,
-                                        "description": pro.description, 
-                                        "type": pro.type,
-                                        "brand": pro.brand,
-                                        "collection": col,
-                                        "category": pro.category,
-                                        "price": pro.price,
-                                        "sale": pro.sale,
-                                        "discount": pro.discount,
-                                        "stock": pro.stock,
-                                        "new": pro.new,
-                                        "variants" : var,
-                                        "images" : img,
-                                        "tag":t
-                                    }
-                                    datalist.append(data)
-                                    paginator = Paginator(datalist,prperpage)
-                                    page = request.GET.get("page",pageno)
-                                    object_list = paginator.page(page)
-                                    a = list(object_list)
-                                    data1 = {
-                                        "wishlist_data":a,
-                                        "total_pages":paginator.num_pages,
-                                        "products_per_page":prperpage,
-                                        "total_products":paginator.count
-                                    }
-                                except:
-                                    pass
+                                data = {
+                                    "id": pro.id,
+                                    "title": pro.title,
+                                    "description": pro.description, 
+                                    "type": pro.type,
+                                    "brand": pro.brand,
+                                    "collection": col,
+                                    "sale": pro.sale,
+                                    "new": pro.new,
+                                    # "user_id": userdata,
+                                    "category_id": pro.category_id,
+                                    "category": pro.category,
+                                    "rating": pro.rating,
+                                    "is_active": pro.is_active,
+                                    "alias": pro.alias,
+                                    "dimensions": pro.dimensions,
+                                    "weight": pro.weight,
+                                    "status": pro.status,
+                                    "is_charged": pro.is_charged,
+                                    "shipping_charges": pro.shipping_charges,
+                                    "other_charges": pro.other_charges,
+                                    "is_wattanty": pro.is_wattanty,
+                                    "warranty_months": pro.warranty_months,
+                                    "warranty_src": pro.warranty_src,
+                                    "warranty_path": pro.warranty_path.name,
+                                    "created_at": pro.created_at.date(),
+                                    "updated_at" : pro.updated_at.date(),
+                                    "new": pro.new,
+                                    "tags":t,
+                                    "variants" : var,
+                                    "images" : img,
+                                    "sold_by" : cp.org_name,
+                                    "weight": pro.weight,
+                                    "dimensions":pro.dimensions
+                                }
+                                datalist.append(data)
+                                paginator = Paginator(datalist,prperpage)
+                                page = request.GET.get("page",pageno)
+                                object_list = paginator.page(page)
+                                a = list(object_list)
+                                data1 = {
+                                    "wishlist_data":a,
+                                    "total_pages":paginator.num_pages,
+                                    "products_per_page":prperpage,
+                                    "total_products":paginator.count
+                                }
                             try:
                                 return Response(data1, status=status.HTTP_200_OK)
                             except:
@@ -1395,7 +1430,7 @@ class WishlistGetApi(CreateAPIView):
 
 @csrf_exempt
 @transaction.atomic
-def wishlistdelete(request, token,pid):
+def wishlistdelete(request, token,pid,vid):
     try:
         token1 = KnoxAuthtoken.objects.get(token_key=token)
     except:
@@ -1416,8 +1451,8 @@ def wishlistdelete(request, token,pid):
                     data = {"message":'Session Expired, Please login again'}
                     return JsonResponse(data, status=status.HTTP_408_REQUEST_TIMEOUT)
                 else:                   
-                    if(Wishlist.objects.filter(user=userdata,product=pid).exists()):
-                        Wishlist.objects.filter(user=userdata, product=pid).delete() 
+                    if(Wishlist.objects.filter(user=userdata,product=pid,variant=vid).exists()):
+                        Wishlist.objects.filter(user=userdata, product=pid,variant=vid).delete() 
                         data = {"message":'Removed successfully'}
                         return JsonResponse(data, status=status.HTTP_200_OK)
                     else:
@@ -2243,7 +2278,7 @@ class TopRatedProductsView(CreateAPIView):
 class SaveForLaterAPI(CreateAPIView):
 
     @transaction.atomic
-    def post(self, request, token,pid):
+    def post(self, request, token,pid,vid):
 
         try:
             token1 = KnoxAuthtoken.objects.get(token_key=token)

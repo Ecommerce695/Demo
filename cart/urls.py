@@ -12,5 +12,5 @@ urlpatterns = [
     #PUT
     path('cartquantityadd/<token>', cart_quantity.as_view(), name='cartquantity'),
     # path('cartquantitydecrease/<token>', cart_quantitydecrease.as_view(), name='cartquantitydecrease'),
-    path('cartdelete/<token>/<pid>',views.cartdelete, name='Delete Item in Cart')
+    path('cartdelete/<token>/<pid>/<vid>',views.cartdelete, name='Delete Item in Cart')
 ]

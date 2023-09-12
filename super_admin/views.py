@@ -1,6 +1,6 @@
 from rest_framework.generics import CreateAPIView
 from .serializers import (SARegisterSerializer,SA_org_serializer,superadminOrgupdate,comapanyemailserializer,
-                          comapanymobileserializer,comapanytaxidserializer,sa_products,
+                          comapanymobileserializer,comapanytaxidserializer,
                           drop_mobile,drop_laptop,sa_category,OrderSerializer)
 from customer.models import Role, UserRole,UserProfile,KnoxAuthtoken,UserAddress
 from .models import CompanyProfile,Category,collection,images,tags,variants,Product,ProductLaptop,ProductMobile

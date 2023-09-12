@@ -1,7 +1,7 @@
 from rest_framework.generics import CreateAPIView
-from .serializers import sa_products,ProductDetailsUpdate
+from .serializers import ProductSerilaizer,ProductDetailsUpdate
 from customer.models import Role, UserRole,UserProfile,KnoxAuthtoken
-from .models import CompanyProfile,Category,collection,images,tags,variants,Product,ProductLaptop,ProductMobile
+from .models import CompanyProfile,Category,collection,images,tags,variants,Product
 from django.db import transaction
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,7 +13,7 @@ from Ecomerce_project.settings import SHIPMENT_TOKEN
 
 # Super Admin Product Upload API 
 class SuperAdminAddProductsAPI(CreateAPIView):
-    serializer_class = sa_products
+    serializer_class = ProductSerilaizer
 
     @transaction.atomic
     def post(self,request,token):
@@ -105,7 +105,6 @@ class SuperAdminAddProductsAPI(CreateAPIView):
                                 response = requests.request("GET", url, headers=headers, data=payload)
                                 data=response.json()
                                 
-                                # print(response.status_code,delivery[j])
                                 if response.status_code==200:            
                                     for i in range(len(data['data']['available_courier_companies'])):
                                         # date = data['data']['available_courier_companies'][i]['etd']
@@ -126,7 +125,10 @@ class SuperAdminAddProductsAPI(CreateAPIView):
                                     warranty_doc=''
                                 else:
                                     warranty_doc= 'http://127.0.0.1:8000/media/product/warranty/' + str(prowarrantyfile)
-                                
+                                if prowarranty==True:
+                                    no_of_month=prowarrantymonths
+                                else:
+                                    no_of_month=0
                                 dis_percentage =variant_discount/100
                                 dis_price = variant_price*dis_percentage
                                 final_price=(variant_price - dis_price)
@@ -149,7 +151,7 @@ class SuperAdminAddProductsAPI(CreateAPIView):
                                     status=prostatus,
                                     warranty_src=warranty_doc,
                                     warranty_path=prowarrantyfile,
-                                    warranty_months = prowarrantymonths,
+                                    warranty_months = no_of_month,
                                     is_charged = charged,
                                     is_wattanty=prowarranty
                                 )
@@ -186,16 +188,16 @@ class SuperAdminAddProductsAPI(CreateAPIView):
 
                                 variants.objects.filter(variant_id=i.variant_id).update(image_id=i.image_id)
                                 
-                                col = collection.objects.create(id=product.id,collection=procollection)
-                                tag = tags.objects.create(id=product.id,tags=probrand)
+                                col = collection.objects.create(id=product.id,collection=procollection,variant_id=variant.variant_id)
+                                tag = tags.objects.create(id=product.id,tags=probrand,variant_id=variant.variant_id)
                                 # tag = tags.objects.create(id=protable.id,tags=prosize)
-                                tag = tags.objects.create(id=product.id,tags=variant_color)
+                                tag = tags.objects.create(id=product.id,tags=variant_color,variant_id=variant.variant_id)
                                 
                                 if product.status=='Publish':
                                     Product.objects.filter(id=product.id).update(is_active=True)
 
                                 if pronew ==True:
-                                    tags.objects.create(id=product.id,tags='new')
+                                    tags.objects.create(id=product.id,tags='new',variant_id=variant.variant_id)
 
                                 data = {"message":'Product Added successfully'}
                                 return Response(data, status=status.HTTP_200_OK)
@@ -400,3 +402,49 @@ class SuperAdminUpdateProductsAPI(CreateAPIView):
             data = {"message":'User is in In-Active, please Activate your account'}
             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
 
+    @transaction.atomic
+    def delete(self,request,token,pid):
+        try:
+            token1 = KnoxAuthtoken.objects.get(token_key=token)
+        except:
+            data = {
+                    "message" : "Invalid Access Token"
+                }
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+        user = token1.user_id
+        usertable = UserProfile.objects.get(id=user)
+        userdata = usertable.id
+        role3 = Role.objects.get(role='SUPER_ADMIN')
+        sarole = role3.role_id
+        roles = UserRole.objects.filter(role_id=sarole).filter(user_id=userdata)
+
+        try:
+            p = Product.objects.get(id=pid,user=userdata)
+        except:
+            data = {
+                    "message" : "Invalid Product Id"
+                }
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+        
+        if(UserProfile.objects.filter(id=userdata, is_active='True')):
+            if roles.exists():
+                if token1.expiry < datetime.now(utc):
+                    KnoxAuthtoken.objects.filter(user=user).delete()
+                    data = {"message":'Session Expired, Please login again'}
+                    return Response(data, status=status.HTTP_408_REQUEST_TIMEOUT)
+                else:
+                    if CompanyProfile.objects.filter(user=userdata).exists():
+                        Product.objects.filter(id=pid).delete()
+                        variants.objects.filter(id=pid).delete()
+                        tags.objects.filter(id=pid).delete()
+                        collection.objects.filter(id=pid).delete()
+                        images.objects.filter(id=pid).delete()
+                        return Response({'message':"Product Deleted Successfully"},status=status.HTTP_200_OK)
+                    else:
+                        return Response({"message":"Not registered with Company Profile"},status=status.HTTP_401_UNAUTHORIZED)
+            else:
+                data={'message':"Current User is not Super Admin"}
+                return Response(data, status=status.HTTP_404_NOT_FOUND)
+        else:
+            data = {"message":'User is in In-Active, please Activate your account'}
+            return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)

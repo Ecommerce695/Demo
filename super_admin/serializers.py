@@ -91,7 +91,7 @@ class comapanytaxidserializer(serializers.ModelSerializer):
         model = CompanyProfile
         fields = ['tax_id']
 
-class sa_products(serializers.Serializer):
+class ProductSerilaizer(serializers.Serializer):
 
     PRODUCT_STATUS_PUBLISH = 'Publish'
     PRODUCT_STATUS_DRAFT = 'Draft'

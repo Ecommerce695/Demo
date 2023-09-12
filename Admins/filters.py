@@ -45,7 +45,7 @@ class GetAdminProductsIncludingFilters(APIView):
                         category = serializer.data['category']
                         name=serializer.data['name']
                         brand=serializer.data['brand']
-                        type1=serializer.data['type']
+                        type=serializer.data['type']
                         p1=serializer.data['price_from']
                         p2=serializer.data['price_to']
                         date1=serializer.data['from_date']
@@ -71,11 +71,10 @@ class GetAdminProductsIncludingFilters(APIView):
                         except:
                             d1=datetime.now().date()
                             d2=datetime.now().date()
-                        
                         if d1<=d2:
-                            product_list =Product.objects.filter(user_id=userdata,title__icontains=name,brand__icontains=brand,category__icontains=category,type__icontains=type1,price__range=[p1,p2],created_at__range=(d1,d2+timedelta(days=1))).values('id').order_by('-created_at','-id')
-                            datalist =[]
-                            if product_list.exists(): 
+                            if p1==0 and p2==1000000000:
+                                product_list =Product.objects.filter(user_id=userdata,title__icontains=name,brand__icontains=brand,category__icontains=category,type__icontains=type,created_at__range=(d1,d2+timedelta(days=1))).values('id').order_by('-created_at','-id')
+                                datalist =[]
                                 for i in product_list:
                                     pro = Product.objects.get(id = i['id'])
                                     col = collection.objects.filter(id=i['id']).values_list('collection',flat=True)
@@ -83,6 +82,7 @@ class GetAdminProductsIncludingFilters(APIView):
                                     img = images.objects.filter(id=i['id']).values()
                                     t = tags.objects.filter(id=i['id']).values_list('tags',flat=True)
                                     vendor = CompanyProfile.objects.get(user=pro.user)
+
                                     data = {
                                         "id": pro.id,
                                         "title": pro.title,
@@ -90,54 +90,127 @@ class GetAdminProductsIncludingFilters(APIView):
                                         "type": pro.type,
                                         "brand": pro.brand,
                                         "collection": col,
-                                        "category": pro.category,
-                                        "price": round(pro.price,2),
                                         "sale": pro.sale,
-                                        "discount": pro.discount,
-                                        "stock": pro.stock,
+                                        "new": pro.new,
+                                        "user_id": userdata,
+                                        "category_id": pro.category_id,
+                                        "category": pro.category,
+                                        "rating": pro.rating,
+                                        "is_active": pro.is_active,
+                                        "alias": pro.alias,
+                                        "dimensions": pro.dimensions,
+                                        "weight": pro.weight,
+                                        "status": pro.status,
+                                        "is_charged": pro.is_charged,
+                                        "shipping_charges": pro.shipping_charges,
+                                        "other_charges": pro.other_charges,
+                                        "is_wattanty": pro.is_wattanty,
+                                        "warranty_months": pro.warranty_months,
+                                        "warranty_src": pro.warranty_src,
+                                        "warranty_path": pro.warranty_path.name,
+                                        "created_at": pro.created_at.date(),
+                                        "updated_at" : pro.updated_at.date(),
                                         "new": pro.new,
                                         "tags":t,
                                         "variants" : var,
                                         "images" : img,
-                                        "sold_by" : vendor.org_name,
-                                        "created_at":pro.created_at.date(),
-                                        "is_deleted":pro.is_deleted
+                                        "sold_by" : vendor.org_name
                                     }
                                     datalist.append(data)
                                 paginator = Paginator(datalist,prperpage)
                                 page = request.GET.get("page",pageno)
                                 object_list = paginator.page(page)
                                 a=list(object_list)
-
                                 data1 = {
-                                    "adminproducts_data":a,
+                                    "my_products_data":a,
                                     "total_pages":paginator.num_pages,
                                     "products_per_page":prperpage,
                                     "total_products":paginator.count
                                 }
                                 try:
-                                    return Response(data1,status=status.HTTP_200_OK)
+                                    return Response(data1, status=status.HTTP_200_OK)
                                 except:
-                                    return Response({"message":"Page/value error"},status=status.HTTP_400_BAD_REQUEST)
-                            paginator = Paginator(datalist,prperpage)
-                            page = request.GET.get("page",pageno)
-                            object_list = paginator.page(page)
-                            a=list(object_list)
+                                    return Response({"message":"Page/value error"},status=status.HTTP_404_NOT_FOUND)
+                            else:
+                                p = Product.objects.filter(user=userdata).values_list('id')
+                                var = variants.objects.filter(price__range=[p1,p2],id__in=p).values().order_by('-id')
+                                l=[]
+                                if var.exists():
+                                    datalist=[]
+                                    for i in var:
+                                        pro = Product.objects.get(id = i['id'])
+                                        col = collection.objects.filter(id=i['id']).values_list('collection',flat=True)
+                                        var = variants.objects.filter(id=i['id']).values()
+                                        img = images.objects.filter(id=i['id']).values()
+                                        t = tags.objects.filter(id=i['id']).values_list('tags',flat=True)
+                                        vendor = CompanyProfile.objects.get(user=pro.user)
 
-                            data1 = {
-                                "adminproducts_data":a,
-                                "total_pages":paginator.num_pages,
-                                "products_per_page":prperpage,
-                                "total_products":paginator.count
-                            }
-                            return Response(data1, status=status.HTTP_200_OK)
+                                        data = {
+                                            "id": pro.id,
+                                            "title": pro.title,
+                                            "description": pro.description, 
+                                            "type": pro.type,
+                                            "brand": pro.brand,
+                                            "collection": col,
+                                            "sale": pro.sale,
+                                            "new": pro.new,
+                                            "user_id": userdata,
+                                            "category_id": pro.category_id,
+                                            "category": pro.category,
+                                            "rating": pro.rating,
+                                            "is_active": pro.is_active,
+                                            "alias": pro.alias,
+                                            "dimensions": pro.dimensions,
+                                            "weight": pro.weight,
+                                            "status": pro.status,
+                                            "is_charged": pro.is_charged,
+                                            "shipping_charges": pro.shipping_charges,
+                                            "other_charges": pro.other_charges,
+                                            "is_wattanty": pro.is_wattanty,
+                                            "warranty_months": pro.warranty_months,
+                                            "warranty_src": pro.warranty_src,
+                                            "warranty_path": pro.warranty_path.name,
+                                            "created_at": pro.created_at.date(),
+                                            "updated_at" : pro.updated_at.date(),
+                                            "new": pro.new,
+                                            "tags":t,
+                                            "variants" : var,
+                                            "images" : img,
+                                            "sold_by" : vendor.org_name
+                                        }
+                                        datalist.append(data)                                    
+                                    paginator = Paginator(datalist,prperpage)
+                                    page = request.GET.get("page",pageno)
+                                    object_list = paginator.page(page)
+                                    a=list(object_list)
+                                    data1 = {
+                                        "my_products_data":a,
+                                        "total_pages":paginator.num_pages,
+                                        "products_per_page":prperpage,
+                                        "total_products":paginator.count
+                                    }
+                                    try:
+                                        return Response(data1, status=status.HTTP_200_OK)
+                                    except:
+                                        return Response({"message":"Page/value error"},status=status.HTTP_404_NOT_FOUND)     
+                                paginator = Paginator(l,prperpage)
+                                page = request.GET.get("page",pageno)
+                                object_list = paginator.page(page)
+                                a=list(object_list)
+                                data1 = {
+                                    "my_products_data":a,
+                                    "total_pages":paginator.num_pages,
+                                    "products_per_page":prperpage,
+                                    "total_products":paginator.count
+                                }
+                                return Response(data1, status=status.HTTP_200_OK)
                         return Response({"message":"From date should be less than To date"}, status=status.HTTP_406_NOT_ACCEPTABLE)
                     return Response({'message':"Value error"},status=status.HTTP_400_BAD_REQUEST)
             else:
                 data={'message':"Current User is not Admin"}
                 return Response(data, status=status.HTTP_404_NOT_FOUND)
         else:
-            data = {"message":'User is in In-Active, please Activate your account'}
+            data = {"message":'SA is in In-Active, please Activate your account'}
             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
@@ -171,12 +244,13 @@ class GetAllProductsIncludingFilters(CreateAPIView):
                         category = serializer.data['category']
                         name=serializer.data['name']
                         brand=serializer.data['brand']
-                        type1=serializer.data['type']
+                        type=serializer.data['type']
                         p1=serializer.data['price_from']
                         p2=serializer.data['price_to']
                         date1=serializer.data['from_date']
                         date2=serializer.data['to_date']
                         pageno=serializer.validated_data['pageno']
+
                         try:
                             if date1=='' and date2=='':
                                 d1= Product.objects.earliest('created_at').created_at.date()
@@ -197,11 +271,11 @@ class GetAllProductsIncludingFilters(CreateAPIView):
                         except:
                             d1=datetime.now().date()
                             d2=datetime.now().date()
-                         
+
                         if d1<=d2:
-                            product_list=Product.objects.filter(title__icontains=name,brand__icontains=brand,category__icontains=category,type__icontains=type1,price__range=[p1,p2],created_at__range=(d1,d2+timedelta(days=1))).values().order_by('-created_at','-id')
-                            datalist =[]
-                            if product_list.exists():
+                            if p1==0 and p2==1000000000:
+                                product_list =Product.objects.filter(title__icontains=name,brand__icontains=brand,category__icontains=category,type__icontains=type,created_at__range=(d1,d2+timedelta(days=1))).values('id').order_by('-created_at','-id')
+                                datalist =[]
                                 for i in product_list:
                                     pro = Product.objects.get(id = i['id'])
                                     col = collection.objects.filter(id=i['id']).values_list('collection',flat=True)
@@ -209,6 +283,7 @@ class GetAllProductsIncludingFilters(CreateAPIView):
                                     img = images.objects.filter(id=i['id']).values()
                                     t = tags.objects.filter(id=i['id']).values_list('tags',flat=True)
                                     vendor = CompanyProfile.objects.get(user=pro.user)
+
                                     data = {
                                         "id": pro.id,
                                         "title": pro.title,
@@ -216,53 +291,128 @@ class GetAllProductsIncludingFilters(CreateAPIView):
                                         "type": pro.type,
                                         "brand": pro.brand,
                                         "collection": col,
-                                        "category": pro.category,
-                                        "price": round(pro.price,2),
                                         "sale": pro.sale,
-                                        "discount": pro.discount,
-                                        "stock": pro.stock,
+                                        "new": pro.new,
+                                        "user_id": userdata,
+                                        "category_id": pro.category_id,
+                                        "category": pro.category,
+                                        "rating": pro.rating,
+                                        "is_active": pro.is_active,
+                                        "alias": pro.alias,
+                                        "dimensions": pro.dimensions,
+                                        "weight": pro.weight,
+                                        "status": pro.status,
+                                        "is_charged": pro.is_charged,
+                                        "shipping_charges": pro.shipping_charges,
+                                        "other_charges": pro.other_charges,
+                                        "is_wattanty": pro.is_wattanty,
+                                        "warranty_months": pro.warranty_months,
+                                        "warranty_src": pro.warranty_src,
+                                        "warranty_path": pro.warranty_path.name,
+                                        "created_at": pro.created_at.date(),
+                                        "updated_at" : pro.updated_at.date(),
                                         "new": pro.new,
                                         "tags":t,
                                         "variants" : var,
                                         "images" : img,
-                                        "sold_by" : vendor.org_name,
-                                        "created_at":pro.created_at.date()
+                                        "sold_by" : vendor.org_name
                                     }
                                     datalist.append(data)
-                                    print(data)
                                 paginator = Paginator(datalist,prperpage)
                                 page = request.GET.get("page",pageno)
                                 object_list = paginator.page(page)
                                 a=list(object_list)
                                 data1 = {
-                                    "products_data":a,
+                                    "my_products_data":a,
                                     "total_pages":paginator.num_pages,
                                     "products_per_page":prperpage,
                                     "total_products":paginator.count
                                 }
                                 try:
-                                    return Response(data1,status=status.HTTP_200_OK)
+                                    return Response(data1, status=status.HTTP_200_OK)
                                 except:
-                                    return Response({"message":"Page/value error"},status=status.HTTP_400_BAD_REQUEST)
-                            paginator = Paginator(datalist,prperpage)
-                            page = request.GET.get("page",pageno)
-                            object_list = paginator.page(page)
-                            a=list(object_list)
-                            data1 = {
-                                "products_data":a,
-                                "total_pages":paginator.num_pages,
-                                "products_per_page":prperpage,
-                                "total_products":paginator.count
-                            }
-                            return Response(data1, status=status.HTTP_200_OK)
+                                    return Response({"message":"Page/value error"},status=status.HTTP_404_NOT_FOUND)
+                            else:
+                                var = variants.objects.filter(price__range=[p1,p2]).values().order_by('-id')
+                                l=[]
+                                if var.exists():
+                                    datalist=[]
+                                    for i in var:
+                                        pro = Product.objects.get(id = i['id'])
+                                        col = collection.objects.filter(id=i['id']).values_list('collection',flat=True)
+                                        var = variants.objects.filter(id=i['id']).values()
+                                        img = images.objects.filter(id=i['id']).values()
+                                        t = tags.objects.filter(id=i['id']).values_list('tags',flat=True)
+                                        vendor = CompanyProfile.objects.get(user=pro.user)
+
+                                        data = {
+                                            "id": pro.id,
+                                            "title": pro.title,
+                                            "description": pro.description, 
+                                            "type": pro.type,
+                                            "brand": pro.brand,
+                                            "collection": col,
+                                            "sale": pro.sale,
+                                            "new": pro.new,
+                                            "user_id": userdata,
+                                            "category_id": pro.category_id,
+                                            "category": pro.category,
+                                            "rating": pro.rating,
+                                            "is_active": pro.is_active,
+                                            "alias": pro.alias,
+                                            "dimensions": pro.dimensions,
+                                            "weight": pro.weight,
+                                            "status": pro.status,
+                                            "is_charged": pro.is_charged,
+                                            "shipping_charges": pro.shipping_charges,
+                                            "other_charges": pro.other_charges,
+                                            "is_wattanty": pro.is_wattanty,
+                                            "warranty_months": pro.warranty_months,
+                                            "warranty_src": pro.warranty_src,
+                                            "warranty_path": pro.warranty_path.name,
+                                            "created_at": pro.created_at.date(),
+                                            "updated_at" : pro.updated_at.date(),
+                                            "new": pro.new,
+                                            "tags":t,
+                                            "variants" : var,
+                                            "images" : img,
+                                            "sold_by" : vendor.org_name
+                                        }
+                                        datalist.append(data)                                    
+                                    paginator = Paginator(datalist,prperpage)
+                                    page = request.GET.get("page",pageno)
+                                    object_list = paginator.page(page)
+                                    a=list(object_list)
+                                    data1 = {
+                                        "my_products_data":a,
+                                        "total_pages":paginator.num_pages,
+                                        "products_per_page":prperpage,
+                                        "total_products":paginator.count
+                                    }
+                                    try:
+                                        return Response(data1, status=status.HTTP_200_OK)
+                                    except:
+                                        return Response({"message":"Page/value error"},status=status.HTTP_404_NOT_FOUND)     
+                                paginator = Paginator(l,prperpage)
+                                page = request.GET.get("page",pageno)
+                                object_list = paginator.page(page)
+                                a=list(object_list)
+                                data1 = {
+                                    "my_products_data":a,
+                                    "total_pages":paginator.num_pages,
+                                    "products_per_page":prperpage,
+                                    "total_products":paginator.count
+                                }
+                                return Response(data1, status=status.HTTP_200_OK)
                         return Response({"message":"From date should be less than To date"}, status=status.HTTP_406_NOT_ACCEPTABLE)
                     return Response({'message':"Value error"},status=status.HTTP_400_BAD_REQUEST)
             else:
                 data={'message':"Current User is not Admin"}
                 return Response(data, status=status.HTTP_404_NOT_FOUND)
         else:
-            data = {"message":'User is in In-Active, please Activate your account'}
+            data = {"message":'SA is in In-Active, please Activate your account'}
             return Response(data, status=status.HTTP_406_NOT_ACCEPTABLE)
+
 
 
 class GetUsersListIncludingFilters(CreateAPIView):

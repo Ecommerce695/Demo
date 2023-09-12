@@ -147,6 +147,7 @@ class useraddressdelete(serializers.Serializer):
 
 class WishlistSerializer(serializers.Serializer):
     id = serializers.IntegerField()
+    variant = serializers.IntegerField()
     pageno = serializers.CharField(default=1)
 
 class PaginationSerializer(serializers.Serializer):

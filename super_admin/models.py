@@ -1,6 +1,7 @@
 from django.db import models
 import datetime
 from Ecomerce_project import settings
+from django.core.validators import FileExtensionValidator
 
 class Category(models.Model):
 
@@ -73,7 +74,11 @@ class Product(models.Model):
     is_wattanty = models.BooleanField(default=False)
     warranty_months = models.PositiveIntegerField(default=0)
     warranty_src = models.CharField(max_length=1000,null=True)
-    warranty_path= models.ImageField(null=True, blank=True, upload_to='product/warranty/')
+    warranty_path= models.FileField(upload_to='product/warranty/',null=True,validators=[
+            FileExtensionValidator(allowed_extensions=['pdf']),  # Only allow these file extensions
+            # MaxFileSizeValidator(limit_mb=2),  # Limit file size to 2 MB
+            # validate_image_dimensions,  # Custom dimension validator
+        ])
     created_at = models.DateTimeField(default=datetime.datetime.now())
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -104,6 +109,7 @@ class collection(models.Model):
     id = models.PositiveIntegerField(db_column='product_id')
     collection_id = models.AutoField(primary_key=True)
     collection = models.CharField(max_length=20,choices=COLLECTION_CHOICES,default='')
+    variant_id = models.PositiveIntegerField(null=True)
 
     class Meta:
         db_table = 'collection'
@@ -113,6 +119,7 @@ class tags(models.Model):
     id = models.PositiveIntegerField(db_column='product_id')
     tag_id = models.AutoField(primary_key=True)
     tags = models.CharField(max_length=100, null=True)
+    variant_id = models.PositiveIntegerField(null=True)
 
     class Meta:
         db_table = 'tags'
@@ -148,7 +155,8 @@ class images(models.Model):
     alt = models.CharField(max_length=100, null=True)
     src = models.CharField(max_length=1000, null=True)
     variant_id = models.PositiveIntegerField(null=True)
-    path = models.ImageField(db_column='path', null=True, blank=True, upload_to='variants/images/')
+    path = models.ImageField(db_column='path', null=True, blank=True, upload_to='variants/images/',validators=[
+            FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])])
 
     class Meta:
         db_table = 'images'
